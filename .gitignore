@@ -1,0 +1,75 @@
+# ===================
+# Java / Maven
+# ===================
+target/
+*.jar
+*.war
+*.ear
+*.class
+*.log
+*.iml
+.gradle/
+build/
+
+# ===================
+# Spring Boot
+# ===================
+*.pid
+*.seed
+*.pid.lock
+
+# ===================
+# Node.js / Next.js
+# ===================
+node_modules/
+.next/
+out/
+.nuxt/
+dist/
+*.tsbuildinfo
+
+# ===================
+# Environment & Secrets
+# ===================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.pem
+
+# ===================
+# IDE & Editors
+# ===================
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+# ===================
+# OS
+# ===================
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ===================
+# Logs & Temp
+# ===================
+logs/
+*.log
+tmp/
+temp/
+uploads/
+
+# ===================
+# Misc
+# ===================
+*.bak
+*.cache
+coverage/
+.nyc_output/

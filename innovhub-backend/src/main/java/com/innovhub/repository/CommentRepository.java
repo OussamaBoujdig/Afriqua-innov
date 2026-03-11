@@ -1,0 +1,17 @@
+package com.innovhub.repository;
+
+import com.innovhub.entity.Comment;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.UUID;
+
+@Repository
+public interface CommentRepository extends JpaRepository<Comment, String> {
+
+    Page<Comment> findByIdea_IdOrderByCreatedAtDesc(String ideaId, Pageable pageable);
+
+    Page<Comment> findByProject_IdOrderByCreatedAtDesc(String projectId, Pageable pageable);
+}
