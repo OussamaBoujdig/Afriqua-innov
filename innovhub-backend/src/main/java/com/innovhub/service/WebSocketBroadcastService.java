@@ -20,6 +20,11 @@ public class WebSocketBroadcastService {
         messagingTemplate.convertAndSendToUser(userId, "/queue/notifications", payload);
     }
 
+    /** Synchronous variant used by AFTER_COMMIT event listeners (already on correct thread). */
+    public void sendNotificationDirect(String userId, Object payload) {
+        messagingTemplate.convertAndSendToUser(userId, "/queue/notifications", payload);
+    }
+
     @Async
     public void sendInvitationToUser(String userId, Object payload) {
         messagingTemplate.convertAndSendToUser(userId, "/queue/invitations", payload);

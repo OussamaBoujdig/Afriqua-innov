@@ -4,9 +4,8 @@ export const API_BASE = "http://localhost:8081/api/v1";
 export function resolveImageUrl(imageUrl: string | null | undefined): string | null {
   if (!imageUrl) return null;
   if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) return imageUrl;
-  const serverRoot = API_BASE.replace("/api/v1", "");
   const path = imageUrl.startsWith("/") ? imageUrl : `/${imageUrl}`;
-  return `${serverRoot}${path}`;
+  return `${API_BASE}${path}`;
 }
 
 export function getToken(): string | null {
