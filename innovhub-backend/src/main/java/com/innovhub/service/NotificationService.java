@@ -8,7 +8,6 @@ import com.innovhub.repository.NotificationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,27 +19,33 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
     private final WebSocketBroadcastService broadcastService;
 
-    @Async
+    /** Persist + broadcast without a type (defaults to INFO). */
     @Transactional
     public void notify(User user, String title, String message) {
-        Notification notification = Notification.builder()
-                .user(user)
-                .type("INFO")
-                .title(title)
-                .message(message)
-                .link(null)
-                .isRead(false)
-                .build();
-        notification = notificationRepository.save(notification);
-        broadcastService.sendNotificationToUser(user.getId(), toResponse(notification));
+        persistAndBroadcast(user, "INFO", title, message, null);
     }
 
-    @Async
+    /** Persist + broadcast with a link (defaults to INFO). */
     @Transactional
     public void notify(User user, String title, String message, String link) {
+        persistAndBroadcast(user, "INFO", title, message, link);
+    }
+
+    /** Persist + broadcast with explicit type and optional link. */
+    @Transactional
+    public void notify(User user, String type, String title, String message, String link) {
+        persistAndBroadcast(user, type != null ? type : "INFO", title, message, link);
+    }
+
+    /**
+     * Saves the notification to DB and immediately broadcasts via WebSocket.
+     * Must be called from a @Transactional context (the public notify() methods above).
+     * broadcastService.sendNotificationToUser is @Async on its own bean — safe to call here.
+     */
+    private void persistAndBroadcast(User user, String type, String title, String message, String link) {
         Notification notification = Notification.builder()
                 .user(user)
-                .type("INFO")
+                .type(type)
                 .title(title)
                 .message(message)
                 .link(link)

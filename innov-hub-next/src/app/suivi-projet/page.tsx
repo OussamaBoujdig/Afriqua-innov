@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
@@ -12,6 +12,7 @@ interface ProjectTaskItem { id: string; title: string; description: string | nul
 interface DocFile { id: string; fileName: string; fileType: string; fileSizeBytes: number; uploadedByName: string; taskId?: string; taskTitle?: string; createdAt: string; downloadUrl?: string; }
 interface Deliverable { id: string; stage: string; title: string; isDone: boolean; doneAt: string | null; doneByName: string | null; sortOrder: number; }
 interface TeamMember { id: string; userId: string; fullName: string; email: string; role: string; teamRole: string | null; department: string | null; avatarUrl: string | null; addedByName: string; addedAt: string; }
+interface Invitation { id: string; invitedUserId: string; invitedUserName: string; teamRole: string | null; status: string; invitedByName: string; responseDeadline: string | null; respondedAt: string | null; createdAt: string; }
 interface Project { id: string; name: string; description: string; currentStage: string; stageProgress: number; status: string; owner: { id: string; fullName: string }; dueDate: string; launchedAt: string; closedAt: string | null; ideaId: string; ideaTitle: string; deliverables: Deliverable[]; }
 
 const stages = [
@@ -66,6 +67,8 @@ export default function SuiviProjetPage() {
   const [taskForm, setTaskForm] = useState({ title: "", description: "", assignedToId: "", dueDate: "" });
 
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [invitations, setInvitations] = useState<Invitation[]>([]);
+  const [cancellingInvitationId, setCancellingInvitationId] = useState<string | null>(null);
   const [showAddMember, setShowAddMember] = useState(false);
   const [addMemberForm, setAddMemberForm] = useState({ userId: "", teamRole: "", responseDeadline: "" });
   const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
@@ -104,6 +107,7 @@ export default function SuiviProjetPage() {
   const loadTasks = async (id: string) => { try { setTasks((await projectsApi.getTasks(id)).data as ProjectTaskItem[]); } catch { setTasks([]); } };
   const loadUsers = async () => { try { setAllUsers((await usersApi.getAll()).data as UserOption[]); } catch { setAllUsers([]); } };
   const loadTeam = async (id: string) => { try { setTeamMembers((await projectsApi.getTeam(id)).data as TeamMember[]); } catch { setTeamMembers([]); } };
+  const loadInvitations = async (id: string) => { try { setInvitations((await projectsApi.getProjectInvitations(id)).data as Invitation[]); } catch { setInvitations([]); } };
 
   useEffect(() => { loadProjects(); loadUsers(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -139,6 +143,7 @@ export default function SuiviProjetPage() {
     loadDocs(p.id);
     loadTasks(p.id);
     loadTeam(p.id);
+    loadInvitations(p.id);
   };
 
   const goBack = () => {
@@ -255,6 +260,7 @@ export default function SuiviProjetPage() {
       setAddMemberForm({ userId: "", teamRole: "", responseDeadline: "" });
       setShowAddMember(false);
       await loadTeam(selected.id);
+      await loadInvitations(selected.id);
     } catch (e) { showError(e); } finally { setActionLoading(false); }
   };
 
@@ -274,7 +280,18 @@ export default function SuiviProjetPage() {
       await projectsApi.removeTeamMember(selected.id, memberId);
       flash(setSuccessMsg, "Membre retiré de l’équipe");
       await loadTeam(selected.id);
+      await loadInvitations(selected.id);
     } catch (e) { showError(e); }
+  };
+
+  const handleCancelInvitation = async (invitationId: string) => {
+    if (!selected) return;
+    setCancellingInvitationId(invitationId);
+    try {
+      await projectsApi.deleteInvitation(invitationId);
+      flash(setSuccessMsg, "Invitation annulée");
+      await loadInvitations(selected.id);
+    } catch (e) { showError(e); } finally { setCancellingInvitationId(null); }
   };
 
   // ── Computed ──
@@ -920,7 +937,54 @@ export default function SuiviProjetPage() {
               </div>
             )}
 
-            {/* ── CHAT TAB ── */}
+            {/* Pending Invitations */}
+            {activeTab === "team" && isAdmin && invitations.filter((inv) => inv.status === "EN_ATTENTE").length > 0 && (
+              <div className="card p-5 mt-4">
+                <h3 className="text-[13px] font-medium text-neutral-900 dark:text-white mb-3 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-sm text-amber-500">schedule</span>
+                  Invitations en attente
+                  <span className="badge bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400">{invitations.filter((inv) => inv.status === "EN_ATTENTE").length}</span>
+                </h3>
+                <div className="space-y-1">
+                  {invitations.filter((inv) => inv.status === "EN_ATTENTE").map((inv) => (
+                    <div key={inv.id} className="flex items-center gap-3 p-3 rounded-md border border-amber-100 dark:border-amber-900/30 bg-amber-50/40 dark:bg-amber-950/10">
+                      <div className="size-9 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 dark:text-amber-400 font-medium text-[12px] shrink-0">
+                        {inv.invitedUserName.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <p className="text-[13px] font-medium text-neutral-900 dark:text-white truncate">{inv.invitedUserName}</p>
+                          {inv.teamRole && <span className="badge bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400">{inv.teamRole}</span>}
+                          <span className="badge bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400">En attente</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-[11px] text-neutral-400">
+                          <span>Invité par {inv.invitedByName}</span>
+                          {inv.responseDeadline && (
+                            <>
+                              <span>&middot;</span>
+                              <span className="text-amber-600 dark:text-amber-400">
+                                Échéance : {new Date(inv.responseDeadline).toLocaleDateString("fr-FR")}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleCancelInvitation(inv.id)}
+                        disabled={cancellingInvitationId === inv.id}
+                        title="Annuler l&apos;invitation"
+                        className="size-7 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center justify-center text-neutral-400 hover:text-red-500 transition-colors shrink-0">
+                        {cancellingInvitationId === inv.id
+                          ? <span className="material-symbols-outlined text-sm animate-spin">progress_activity</span>
+                          : <span className="material-symbols-outlined text-sm">cancel</span>}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+                        {/* ── CHAT TAB ── */}
             {activeTab === "chat" && selected && (
               <ProjectChat projectId={selected.id} />
             )}

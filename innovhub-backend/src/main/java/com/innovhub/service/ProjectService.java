@@ -123,7 +123,7 @@ public class ProjectService {
             project = projectRepository.save(project);
 
             String link = "/suivi-projet?id=" + project.getId();
-            notificationService.notify(project.getOwner(), "Projet terminé",
+            notificationService.notify(project.getOwner(), "SUCCESS", "Projet terminé",
                     "Le projet \"" + project.getName() + "\" est terminé. Toutes les étapes sont complétées.", link);
 
             broadcastService.sendProjectUpdate(id, "STAGE_ADVANCED");
@@ -143,7 +143,7 @@ public class ProjectService {
         recalculateProgress(project);
 
         String link = "/suivi-projet?id=" + project.getId();
-        notificationService.notify(project.getOwner(), "Étape avancée",
+        notificationService.notify(project.getOwner(), "SUCCESS", "Étape avancée",
                 "Le projet \"" + project.getName() + "\" est passé à l'étape " + next + ".", link);
 
         broadcastService.sendProjectUpdate(id, "STAGE_ADVANCED");
@@ -358,7 +358,7 @@ public class ProjectService {
         task = projectTaskRepository.save(task);
 
         if (assignee != null) {
-            notificationService.notify(assignee, "Nouvelle tâche assignée",
+            notificationService.notify(assignee, "INFO", "Nouvelle tâche assignée",
                     "La tâche \"" + task.getTitle() + "\" vous a été assignée dans le projet \"" + project.getName() + "\".",
                     "/mes-taches");
         }
@@ -417,7 +417,7 @@ public class ProjectService {
 
         if (req.getStatus() != null && TaskStatus.valueOf(req.getStatus()) == TaskStatus.TERMINEE) {
             User owner = savedTask.getProject().getOwner();
-            notificationService.notify(owner, "Tâche terminée",
+            notificationService.notify(owner, "SUCCESS", "Tâche terminée",
                     "La tâche \"" + savedTask.getTitle() + "\" a été marquée comme terminée.",
                     "/suivi-projet?id=" + savedTask.getProject().getId());
         }
@@ -515,7 +515,7 @@ public class ProjectService {
         invitation = teamInvitationRepository.save(invitation);
 
         String deadlineInfo = deadline != null ? " Veuillez répondre avant la date limite." : "";
-        notificationService.notify(member, "Invitation à rejoindre un projet",
+        notificationService.notify(member, "INFO", "Invitation à rejoindre un projet",
                 "Vous êtes invité(e) à rejoindre l'équipe du projet \"" + project.getName() + "\""
                         + (req.getTeamRole() != null ? " en tant que " + req.getTeamRole() : "")
                         + "." + deadlineInfo,
@@ -600,14 +600,14 @@ public class ProjectService {
                     .build();
             projectTeamMemberRepository.save(teamMember);
 
-            notificationService.notify(inviter, "Invitation acceptée",
+            notificationService.notify(inviter, "SUCCESS", "Invitation acceptée",
                     currentUser.getFullName() + " a accepté de rejoindre l'équipe du projet \"" + project.getName() + "\".",
                     "/suivi-projet?id=" + project.getId());
         } else {
             String reason = req.getMessage() != null && !req.getMessage().isBlank()
                     ? " Justification : " + req.getMessage()
                     : "";
-            notificationService.notify(inviter, "Invitation refusée",
+            notificationService.notify(inviter, "WARNING", "Invitation refusée",
                     currentUser.getFullName() + " a refusé de rejoindre l'équipe du projet \"" + project.getName() + "\"." + reason,
                     "/suivi-projet?id=" + project.getId());
         }

@@ -25,6 +25,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -261,7 +264,7 @@ public class IdeaService {
             idea.setTotalScore(avgScore);
             idea.setStatus(IdeaStatus.SCOREE);
             ideaRepository.save(idea);
-            notifySubmitter(idea, "Idée évaluée", "Votre idée \"" + idea.getTitle() + "\" a reçu les 3 évaluations requises (Resp. Innovation, Dir. BU, Dir. Général).");
+            notifySubmitter(idea, "SUCCESS", "Idée évaluée", "Votre idée \"" + idea.getTitle() + "\" a reçu les 3 évaluations requises (Resp. Innovation, Dir. BU, Dir. Général).");
         } else {
             idea = ideaRepository.findById(ideaId)
                     .orElseThrow(() -> new ResourceNotFoundException("Idée non trouvée"));
@@ -293,7 +296,7 @@ public class IdeaService {
                 idea.setStatus(newStatus);
                 saveHistory(idea, oldStatus, newStatus, currentUser, req.getComment());
                 ideaRepository.save(idea);
-                notifySubmitter(idea, "Idée validée", "Votre idée \"" + idea.getTitle() + "\" a été validée par le Responsable Innovation.");
+                notifySubmitter(idea, "SUCCESS", "Idée validée", "Votre idée \"" + idea.getTitle() + "\" a été validée par le Responsable Innovation.");
                 notifyUsersByRole(UserRole.DIRECTEUR_BU, "Idée à approuver", "L'idée \"" + idea.getTitle() + "\" attend votre approbation.", "/approbation");
             }
             case "REJECT" -> {
@@ -309,7 +312,7 @@ public class IdeaService {
                 idea.setStatus(newStatus);
                 saveHistory(idea, oldStatus, newStatus, currentUser, req.getComment());
                 ideaRepository.save(idea);
-                notifySubmitter(idea, "Idée rejetée", "Votre idée \"" + idea.getTitle() + "\" a été rejetée.");
+                notifySubmitter(idea, "ERROR", "Idée rejetée", "Votre idée \"" + idea.getTitle() + "\" a été rejetée.");
             }
             case "APPROVE_BU" -> {
                 // Directeur BU approves
@@ -323,7 +326,7 @@ public class IdeaService {
                 idea.setStatus(newStatus);
                 saveHistory(idea, oldStatus, newStatus, currentUser, req.getComment());
                 ideaRepository.save(idea);
-                notifySubmitter(idea, "Idée approuvée BU", "Votre idée \"" + idea.getTitle() + "\" a été approuvée par le Directeur BU.");
+                notifySubmitter(idea, "SUCCESS", "Idée approuvée BU", "Votre idée \"" + idea.getTitle() + "\" a été approuvée par le Directeur BU.");
                 notifyUsersByRole(UserRole.DIRECTEUR_GENERAL, "Idée à approuver", "L'idée \"" + idea.getTitle() + "\" attend votre approbation finale.", "/approbation");
             }
             case "APPROVE_DG" -> {
@@ -338,7 +341,7 @@ public class IdeaService {
                 idea.setStatus(newStatus);
                 saveHistory(idea, oldStatus, newStatus, currentUser, req.getComment());
                 ideaRepository.save(idea);
-                notifySubmitter(idea, "Idée approuvée DG", "Votre idée \"" + idea.getTitle() + "\" a été approuvée par le Directeur Général.");
+                notifySubmitter(idea, "SUCCESS", "Idée approuvée DG", "Votre idée \"" + idea.getTitle() + "\" a été approuvée par le Directeur Général.");
             }
             case "CLOSE" -> {
                 // Directeur Général closes the idea and creates a project
@@ -399,12 +402,37 @@ public class IdeaService {
         Idea idea = ideaRepository.findById(ideaId)
                 .orElseThrow(() -> new ResourceNotFoundException("Idée non trouvée"));
         idea.setScoringDeadline(deadline);
-        idea = ideaRepository.save(idea);
+        final Idea savedIdea = ideaRepository.save(idea);
 
-        notifySubmitter(idea, "Délai de scoring défini",
-                "Un délai de scoring a été défini pour votre idée \"" + idea.getTitle() + "\".");
+        String formattedDeadline = ZonedDateTime.ofInstant(deadline, ZoneId.of("Africa/Casablanca"))
+                .format(DateTimeFormatter.ofPattern("dd/MM/yyyy à HH:mm"));
 
-        return toIdeaDetail(idea);
+        // Notify the idea submitter
+        notifySubmitter(savedIdea, "INFO", "Délai d'évaluation défini",
+                "Un délai d'évaluation a été fixé au " + formattedDeadline + " pour votre idée \"" + savedIdea.getTitle() + "\". Les évaluateurs ont été notifiés.");
+
+        // Notify all evaluators who have not yet scored this idea
+        List<String> alreadyScoredUserIds = ideaScoreRepository.findByIdea_Id(ideaId)
+                .stream().map(s -> s.getScoredBy().getId()).collect(Collectors.toList());
+
+        List<UserRole> evaluatorRoles = List.of(
+                UserRole.RESPONSABLE_INNOVATION,
+                UserRole.DIRECTEUR_BU,
+                UserRole.DIRECTEUR_GENERAL
+        );
+
+        for (UserRole role : evaluatorRoles) {
+            userRepository.findByRole(role).forEach(evaluator -> {
+                if (!alreadyScoredUserIds.contains(evaluator.getId())) {
+                    notificationService.notify(evaluator, "WARNING",
+                            "Délai d'évaluation fixé",
+                            "L'idée \"" + savedIdea.getTitle() + "\" doit être évaluée avant le " + formattedDeadline + ". Votre évaluation est requise.",
+                            "/approbation");
+                }
+            });
+        }
+
+        return toIdeaDetail(savedIdea);
     }
 
     private void saveHistory(Idea idea, IdeaStatus from, IdeaStatus to, User actionBy, String comment) {
@@ -579,12 +607,16 @@ public class IdeaService {
     }
 
     private void notifySubmitter(Idea idea, String title, String message) {
-        notificationService.notify(idea.getSubmittedBy(), title, message, "/mes-idees");
+        notificationService.notify(idea.getSubmittedBy(), "INFO", title, message, "/mes-idees");
+    }
+
+    private void notifySubmitter(Idea idea, String type, String title, String message) {
+        notificationService.notify(idea.getSubmittedBy(), type, title, message, "/mes-idees");
     }
 
     private void notifyUsersByRole(UserRole role, String title, String message, String link) {
         userRepository.findByRole(role)
-                .forEach(u -> notificationService.notify(u, title, message, link));
+                .forEach(u -> notificationService.notify(u, "INFO", title, message, link));
     }
 }
 

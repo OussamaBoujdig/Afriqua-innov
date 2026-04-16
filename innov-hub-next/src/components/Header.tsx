@@ -23,9 +23,19 @@ interface Notif {
   link: string | null;
   isRead: boolean;
   createdAt: string;
+  type?: string;
 }
 
-interface ToastNotif { id: string; title: string; message: string; link: string | null }
+interface ToastNotif { id: string; title: string; message: string; link: string | null; type?: string }
+
+const notifTypeConfig = (type?: string) => {
+  switch (type) {
+    case "SUCCESS": return { icon: "check_circle", color: "text-emerald-500", bg: "bg-emerald-50", border: "border-emerald-400" };
+    case "WARNING": return { icon: "warning", color: "text-amber-500", bg: "bg-amber-50", border: "border-amber-400" };
+    case "ERROR":   return { icon: "error", color: "text-red-500", bg: "bg-red-50", border: "border-red-400" };
+    default:        return { icon: "notifications", color: "text-[#0066B3]", bg: "bg-blue-50", border: "border-[#0066B3]" };
+  }
+};
 
 function NotifToast({ notif, onClose, onNavigate }: {
   notif: ToastNotif;
@@ -37,11 +47,13 @@ function NotifToast({ notif, onClose, onNavigate }: {
     return () => clearTimeout(t);
   }, [onClose]);
 
+  const cfg = notifTypeConfig(notif.type);
+
   return (
-    <div className="pointer-events-auto w-80 card p-3 shadow-xl animate-slide-in-right border-l-4 border-[#0066B3]">
+    <div className={`pointer-events-auto w-80 card p-3 shadow-xl animate-slide-in-right border-l-4 ${cfg.border}`}>
       <div className="flex items-start gap-2.5">
-        <div className="size-7 rounded-md bg-blue-50 flex items-center justify-center shrink-0 mt-0.5">
-          <span className="material-symbols-outlined text-[15px] text-[#0066B3]">notifications</span>
+        <div className={`size-7 rounded-md ${cfg.bg} flex items-center justify-center shrink-0 mt-0.5`}>
+          <span className={`material-symbols-outlined text-[15px] ${cfg.color}`}>{cfg.icon}</span>
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-[13px] font-semibold text-neutral-900 dark:text-white leading-snug">{notif.title}</p>
@@ -87,7 +99,7 @@ export default function Header() {
             const page = r.data as { content: Notif[] };
             const latest = page.content?.[0];
             if (latest && !latest.isRead) {
-              setToasts(t => [...t, { id: latest.id + Date.now(), title: latest.title, message: latest.message, link: latest.link }]);
+              setToasts(t => [...t, { id: latest.id + Date.now(), title: latest.title, message: latest.message, link: latest.link, type: latest.type }]);
             }
           }).catch(() => {});
         }
@@ -116,7 +128,7 @@ export default function Header() {
             const notif: Notif = JSON.parse(frame.body);
             setUnread(prev => prev + 1);
             setNotifs(prev => [notif, ...prev]);
-            setToasts(t => [...t, { id: notif.id + Date.now(), title: notif.title, message: notif.message, link: notif.link }]);
+            setToasts(t => [...t, { id: notif.id + Date.now(), title: notif.title, message: notif.message, link: notif.link, type: notif.type }]);
           } catch { /* parse error */ }
         });
         client.subscribe(`/user/${user.id}/queue/invitations`, () => {});
@@ -152,10 +164,26 @@ export default function Header() {
 
   const resolveNotifLink = useCallback((link: string | null): string | null => {
     if (!link) return null;
-    if (!link.startsWith("/idees/")) return link;
     const role = user?.role;
-    if (role === "PORTEUR_IDEE") return "/mes-idees";
-    return "/approbation";
+    // Idea links: route by role
+    if (link.startsWith("/idees/")) {
+      if (role === "PORTEUR_IDEE") return "/mes-idees";
+      return "/approbation";
+    }
+    // Campaign links
+    if (link.startsWith("/campagnes/")) return link.replace("/campagnes/", "/campagnes/");
+    // Project links
+    if (link.startsWith("/projets/") || link.startsWith("/projects/")) return "/suivi-projet";
+    // Task links
+    if (link.startsWith("/taches/") || link.startsWith("/tasks/")) return "/mes-taches";
+    // Invitation links
+    if (link.startsWith("/invitations/")) return "/mes-invitations";
+    // Messaging links
+    if (link.startsWith("/messagerie/") || link.startsWith("/messages/")) return "/messagerie";
+    // Approbation
+    if (link === "/approbation") return "/approbation";
+    // Fallback: return as-is
+    return link;
   }, [user]);
 
   const handleNotifClick = async (n: Notif) => {
@@ -320,13 +348,20 @@ export default function Header() {
                               className={`w-full text-left px-4 py-3 transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800/50 ${
                                 !n.isRead ? "bg-blue-50/40 dark:bg-blue-950/10" : ""
                               }`}>
-                              <div className="flex items-start gap-2">
-                                {!n.isRead && <span className="mt-1.5 shrink-0 size-1.5 rounded-full bg-blue-500" />}
-                                {n.isRead && <span className="mt-1.5 shrink-0 size-1.5" />}
+                              <div className="flex items-start gap-2.5">
+                                {/* Type icon */}
+                                <div className={`mt-0.5 shrink-0 size-6 rounded-md flex items-center justify-center ${notifTypeConfig(n.type).bg}`}>
+                                  <span className={`material-symbols-outlined text-[13px] ${notifTypeConfig(n.type).color}`}>
+                                    {notifTypeConfig(n.type).icon}
+                                  </span>
+                                </div>
                                 <div className="min-w-0 flex-1">
-                                  <p className={`text-[13px] leading-snug ${!n.isRead ? "font-medium text-neutral-900 dark:text-white" : "text-neutral-600 dark:text-neutral-400"}`}>
-                                    {n.title}
-                                  </p>
+                                  <div className="flex items-center gap-1.5">
+                                    <p className={`text-[13px] leading-snug flex-1 ${!n.isRead ? "font-medium text-neutral-900 dark:text-white" : "text-neutral-600 dark:text-neutral-400"}`}>
+                                      {n.title}
+                                    </p>
+                                    {!n.isRead && <span className="shrink-0 size-1.5 rounded-full bg-blue-500" />}
+                                  </div>
                                   <p className="mt-0.5 text-[12px] text-neutral-500 line-clamp-2">{n.message}</p>
                                   <p className="mt-1 text-[11px] text-neutral-400">{timeAgo(n.createdAt)}</p>
                                 </div>
