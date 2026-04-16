@@ -3,9 +3,11 @@ package com.innovhub.service;
 import com.innovhub.dto.response.NotificationResponse;
 import com.innovhub.entity.Notification;
 import com.innovhub.entity.User;
+import com.innovhub.event.NotificationEvent;
 import com.innovhub.exception.ResourceNotFoundException;
 import com.innovhub.repository.NotificationRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -17,32 +19,32 @@ import org.springframework.transaction.annotation.Transactional;
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
-    private final WebSocketBroadcastService broadcastService;
+    private final ApplicationEventPublisher eventPublisher;
 
     /** Persist + broadcast without a type (defaults to INFO). */
     @Transactional
     public void notify(User user, String title, String message) {
-        persistAndBroadcast(user, "INFO", title, message, null);
+        persistAndPublish(user, "INFO", title, message, null);
     }
 
     /** Persist + broadcast with a link (defaults to INFO). */
     @Transactional
     public void notify(User user, String title, String message, String link) {
-        persistAndBroadcast(user, "INFO", title, message, link);
+        persistAndPublish(user, "INFO", title, message, link);
     }
 
     /** Persist + broadcast with explicit type and optional link. */
     @Transactional
     public void notify(User user, String type, String title, String message, String link) {
-        persistAndBroadcast(user, type != null ? type : "INFO", title, message, link);
+        persistAndPublish(user, type != null ? type : "INFO", title, message, link);
     }
 
     /**
-     * Saves the notification to DB and immediately broadcasts via WebSocket.
-     * Must be called from a @Transactional context (the public notify() methods above).
-     * broadcastService.sendNotificationToUser is @Async on its own bean — safe to call here.
+     * Saves the notification to DB and publishes a NotificationEvent.
+     * The event listener broadcasts via WebSocket AFTER_COMMIT, ensuring
+     * the notification is already persisted when the client receives the push.
      */
-    private void persistAndBroadcast(User user, String type, String title, String message, String link) {
+    private void persistAndPublish(User user, String type, String title, String message, String link) {
         Notification notification = Notification.builder()
                 .user(user)
                 .type(type)
@@ -52,7 +54,7 @@ public class NotificationService {
                 .isRead(false)
                 .build();
         notification = notificationRepository.save(notification);
-        broadcastService.sendNotificationToUser(user.getId(), toResponse(notification));
+        eventPublisher.publishEvent(new NotificationEvent(this, user.getId(), toResponse(notification)));
     }
 
     public Page<NotificationResponse> getNotifications(String userId, Pageable pageable) {
