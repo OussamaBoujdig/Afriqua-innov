@@ -6,7 +6,9 @@ import com.innovhub.dto.response.UserSummaryResponse;
 import com.innovhub.entity.Idea;
 import com.innovhub.entity.User;
 import com.innovhub.enums.IdeaStatus;
+import com.innovhub.enums.ProjectStage;
 import com.innovhub.repository.IdeaRepository;
+import com.innovhub.repository.ProjectRepository;
 import com.innovhub.repository.UserRepository;
 import com.innovhub.repository.VoteRepository;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +27,7 @@ import java.util.stream.Collectors;
 public class DashboardService {
 
     private final IdeaRepository ideaRepository;
+    private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
     private final VoteRepository voteRepository;
 
@@ -42,14 +45,12 @@ public class DashboardService {
 
         long ideasDeployees = ideaRepository.countByStatus(IdeaStatus.CLOTUREE);
 
+        // Pipeline tracks project stages (not idea statuses)
         Map<String, Long> pipeline = new LinkedHashMap<>();
-        pipeline.put("Exploration",
-                ideaRepository.countByStatus(IdeaStatus.SOUMISE) + ideaRepository.countByStatus(IdeaStatus.EN_VALIDATION));
-        pipeline.put("Conceptualisation",
-                ideaRepository.countByStatus(IdeaStatus.SCOREE) + ideaRepository.countByStatus(IdeaStatus.APPROUVEE_INNOVATION));
-        pipeline.put("Pilote",
-                ideaRepository.countByStatus(IdeaStatus.APPROUVEE_BU) + ideaRepository.countByStatus(IdeaStatus.APPROUVEE_DG));
-        pipeline.put("Mise à l'échelle", ideaRepository.countByStatus(IdeaStatus.CLOTUREE));
+        pipeline.put("Exploration",       projectRepository.countByCurrentStage(ProjectStage.EXPLORATION));
+        pipeline.put("Conceptualisation", projectRepository.countByCurrentStage(ProjectStage.CONCEPTUALISATION));
+        pipeline.put("Pilote",            projectRepository.countByCurrentStage(ProjectStage.PILOTE));
+        pipeline.put("Mise à l'échelle",  projectRepository.countByCurrentStage(ProjectStage.MISE_A_ECHELLE));
 
         List<IdeaSummaryResponse> recentIdeas = ideaRepository
                 .findAll(PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "createdAt")))

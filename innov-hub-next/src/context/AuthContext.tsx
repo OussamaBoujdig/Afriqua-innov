@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
-import { auth as authApi, setTokens, clearTokens } from "@/lib/api";
+import { auth as authApi, users as usersApi, setTokens, clearTokens } from "@/lib/api";
 
 interface User {
   id: string;
@@ -20,15 +20,6 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (data: {
-    email: string;
-    password: string;
-    firstName: string;
-    lastName: string;
-    role: string;
-    businessUnit?: string;
-    department?: string;
-  }) => Promise<void>;
   logout: () => Promise<void>;
   isRole: (...roles: string[]) => boolean;
 }
@@ -41,26 +32,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
-    if (token) {
-      try {
-        const payload = JSON.parse(atob(token.split(".")[1]));
-        setUser({
-          id: payload.sub,
-          email: payload.email,
-          firstName: payload.firstName || "",
-          lastName: payload.lastName || "",
-          fullName: payload.fullName || payload.email,
-          role: payload.role,
-          businessUnit: null,
-          department: null,
-          avatarUrl: null,
-          points: 0,
-        });
-      } catch {
-        clearTokens();
-      }
+    if (!token) {
+      setLoading(false);
+      return;
     }
-    setLoading(false);
+    // Validate token is not locally expired before hitting the server
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      const isExpired = payload.exp && payload.exp * 1000 < Date.now();
+      if (isExpired) {
+        clearTokens();
+        setLoading(false);
+        return;
+      }
+      // Verify token is accepted by the backend
+      usersApi.getMe().then((res) => {
+        const u = res.data as User;
+        setUser(u);
+      }).catch(() => {
+        clearTokens();
+      }).finally(() => {
+        setLoading(false);
+      });
+    } catch {
+      clearTokens();
+      setLoading(false);
+    }
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
@@ -73,28 +70,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setTokens(accessToken, refreshToken);
     setUser(u);
   }, []);
-
-  const register = useCallback(
-    async (data: {
-      email: string;
-      password: string;
-      firstName: string;
-      lastName: string;
-      role: string;
-      businessUnit?: string;
-      department?: string;
-    }) => {
-      const res = await authApi.register(data);
-      const { accessToken, refreshToken, user: u } = res.data as {
-        accessToken: string;
-        refreshToken: string;
-        user: User;
-      };
-      setTokens(accessToken, refreshToken);
-      setUser(u);
-    },
-    []
-  );
 
   const logout = useCallback(async () => {
     try {
@@ -113,7 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, isRole }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, isRole }}>
       {children}
     </AuthContext.Provider>
   );

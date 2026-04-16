@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ideas as ideasApi } from "@/lib/api";
+import { ideas as ideasApi, resolveImageUrl } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 
 interface Idea {
   id: string;
@@ -13,33 +14,154 @@ interface Idea {
   voteCount: number;
   commentCount: number;
   submittedByName: string;
+  imageUrl: string | null;
   createdAt: string;
 }
 
-const statusConfig: Record<string, { label: string; color: string; barColor: string }> = {
-  BROUILLON: { label: "Brouillon", color: "bg-slate-100 text-slate-600", barColor: "bg-slate-300" },
-  SOUMISE: { label: "Soumise", color: "bg-blue-100 text-blue-700", barColor: "bg-blue-500" },
-  EN_VALIDATION: { label: "En révision", color: "bg-amber-100 text-amber-700", barColor: "bg-amber-500" },
-  SCOREE: { label: "Scorée", color: "bg-purple-100 text-purple-700", barColor: "bg-purple-500" },
-  APPROUVEE_INNOVATION: { label: "Approuvée Innovation", color: "bg-teal-100 text-teal-700", barColor: "bg-teal-500" },
-  APPROUVEE_BU: { label: "Approuvée BU", color: "bg-emerald-100 text-emerald-700", barColor: "bg-emerald-500" },
-  APPROUVEE_DG: { label: "Approuvée DG", color: "bg-emerald-100 text-emerald-700", barColor: "bg-emerald-500" },
-  CLOTUREE: { label: "Clôturée", color: "bg-slate-100 text-slate-600", barColor: "bg-primary" },
-  REJETEE: { label: "Rejetée", color: "bg-red-100 text-red-700", barColor: "bg-red-500" },
+const statusConfig: Record<string, { label: string; color: string }> = {
+  BROUILLON:            { label: "Brouillon",    color: "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400" },
+  SOUMISE:              { label: "Soumise",      color: "bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400" },
+  EN_VALIDATION:        { label: "En révision",  color: "bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400" },
+  SCOREE:               { label: "Scorée",       color: "bg-violet-50 text-violet-700 dark:bg-violet-950/30 dark:text-violet-400" },
+  APPROUVEE_INNOVATION: { label: "Approuvée",    color: "bg-teal-50 text-teal-700 dark:bg-teal-950/30 dark:text-teal-400" },
+  APPROUVEE_BU:         { label: "Approuvée BU", color: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400" },
+  APPROUVEE_DG:         { label: "Approuvée DG", color: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400" },
+  CLOTUREE:             { label: "Clôturée",     color: "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400" },
+  REJETEE:              { label: "Rejetée",      color: "bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-400" },
 };
 
-const statusFlow = ["SOUMISE", "EN_VALIDATION", "SCOREE", "APPROUVEE_INNOVATION", "APPROUVEE_BU", "APPROUVEE_DG", "CLOTUREE"];
+function IdeaCardSkeleton() {
+  return (
+    <div className="card flex flex-col overflow-hidden">
+      <div className="skeleton aspect-[16/9] w-full" style={{ borderRadius: 0 }} />
+      <div className="p-4 space-y-3">
+        <div className="flex gap-2">
+          <div className="skeleton h-5 w-16 rounded-full" />
+          <div className="skeleton h-5 w-20 rounded-full" />
+        </div>
+        <div className="skeleton h-4 w-4/5" />
+        <div className="flex justify-between pt-2 border-t border-neutral-100">
+          <div className="skeleton h-3 w-20" />
+          <div className="skeleton h-3 w-16" />
+        </div>
+      </div>
+    </div>
+  );
+}
 
-function getStepIndex(status: string) {
-  const idx = statusFlow.indexOf(status);
-  return idx >= 0 ? idx : 0;
+interface IdeaCardProps {
+  idea: Idea;
+  canDeleteIdea: boolean;
+  deleting: string | null;
+  votingId: string | null;
+  justVoted: string | null;
+  onDelete: (id: string) => void;
+  onVote: (id: string) => void;
+}
+
+function IdeaCard({ idea, canDeleteIdea, deleting, votingId, justVoted, onDelete, onVote }: IdeaCardProps) {
+  const [imgLoaded, setImgLoaded] = useState(false);
+  const cfg = statusConfig[idea.status] || statusConfig.SOUMISE;
+  const resolvedImg = resolveImageUrl(idea.imageUrl);
+
+  return (
+    <div className="card group flex flex-col overflow-hidden hover:border-[#0066B3]/40 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
+      {/* Image */}
+      <div className="relative aspect-[16/9] w-full overflow-hidden bg-neutral-100 dark:bg-neutral-800">
+        {resolvedImg ? (
+          <>
+            {!imgLoaded && <div className="skeleton absolute inset-0" style={{ borderRadius: 0 }} />}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={resolvedImg}
+              alt={idea.title}
+              className={`absolute inset-0 h-full w-full object-cover group-hover:scale-[1.02] transition-all duration-300 ${imgLoaded ? "opacity-100" : "opacity-0"}`}
+              onLoad={() => setImgLoaded(true)}
+            />
+          </>
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-blue-50 to-slate-100 dark:from-neutral-800 dark:to-neutral-900">
+            <span className="material-symbols-outlined text-[32px] text-[#0066B3]/25">lightbulb</span>
+          </div>
+        )}
+        {/* Delete button overlay */}
+        {canDeleteIdea && (
+          <button
+            onClick={() => onDelete(idea.id)}
+            disabled={deleting === idea.id}
+            className="absolute top-2 right-2 size-7 rounded-md bg-white/90 dark:bg-neutral-900/90 backdrop-blur-sm flex items-center justify-center text-neutral-400 hover:text-red-600 hover:bg-white transition-all duration-150 opacity-0 group-hover:opacity-100 shadow-sm"
+          >
+            <span className="material-symbols-outlined text-[15px]">
+              {deleting === idea.id ? "progress_activity" : "delete"}
+            </span>
+          </button>
+        )}
+      </div>
+
+      <div className="p-4 flex-1 flex flex-col">
+        {/* Badges */}
+        <div className="flex items-center gap-2 mb-2 flex-wrap">
+          <span className={`badge ${cfg.color}`}>{cfg.label}</span>
+          {idea.category && (
+            <span className="badge bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400">{idea.category}</span>
+          )}
+          {idea.totalScore != null && (
+            <span className="ml-auto badge bg-blue-50 text-[#0066B3] font-semibold tabular-nums">
+              {Number(idea.totalScore).toFixed(0)} pts
+            </span>
+          )}
+        </div>
+
+        <h3 className="text-[14px] font-semibold text-neutral-900 dark:text-white mb-auto group-hover:text-[#0066B3] transition-colors duration-150 leading-snug">
+          {idea.title}
+        </h3>
+
+        {/* Footer */}
+        <div className="mt-3 pt-3 border-t border-neutral-100 dark:border-neutral-800 flex items-center justify-between text-[12px] text-neutral-400">
+          <span>{new Date(idea.createdAt).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" })}</span>
+          <div className="flex items-center gap-3">
+            <span className="flex items-center gap-1 cursor-default">
+              <span className="material-symbols-outlined text-[14px]">chat_bubble</span>
+              {idea.commentCount}
+            </span>
+            <button
+              onClick={() => onVote(idea.id)}
+              disabled={!!votingId}
+              className={`flex items-center gap-1 transition-all duration-150 ${
+                justVoted === idea.id
+                  ? "text-[#0066B3] scale-125"
+                  : "hover:text-[#0066B3] hover:scale-110"
+              }`}
+            >
+              <span className={`material-symbols-outlined text-[14px] ${justVoted === idea.id ? "active-fill" : ""}`}>
+                thumb_up
+              </span>
+              {idea.voteCount}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function MesIdeesPage() {
+  const { user } = useAuth();
+  const isResponsable = user?.role === "RESPONSABLE_INNOVATION";
+  // Porteur can delete their own BROUILLON/SOUMISE; Responsable can delete any non-clôturée
+  const getDeletable = (idea: Idea) => {
+    if (idea.status === "CLOTUREE") return false;
+    if (isResponsable) return true;
+    return true; // porteur can delete own (API enforces ownership server-side)
+  };
+
   const [ideas, setIdeas] = useState<Idea[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("ALL");
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [votingId, setVotingId] = useState<string | null>(null);
+  const [justVoted, setJustVoted] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const load = () => {
     setLoading(true);
@@ -52,19 +174,31 @@ export default function MesIdeesPage() {
   useEffect(load, []);
 
   const handleVote = async (id: string) => {
+    if (votingId) return;
+    setVotingId(id);
+    setJustVoted(id);
     try {
       await ideasApi.vote(id);
       load();
     } catch { /* ignore */ }
+    finally {
+      setVotingId(null);
+      setTimeout(() => setJustVoted(null), 600);
+    }
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm("Voulez-vous vraiment supprimer cette idée ?")) return;
     setDeleting(id);
+    setDeleteError(null);
     try {
       await ideasApi.delete(id);
       setIdeas((prev) => prev.filter((i) => i.id !== id));
-    } catch { /* ignore */ } finally {
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Erreur lors de la suppression";
+      setDeleteError(msg);
+      setTimeout(() => setDeleteError(null), 4000);
+    } finally {
       setDeleting(null);
     }
   };
@@ -76,132 +210,88 @@ export default function MesIdeesPage() {
     : ideas.filter((i) => i.status === filter);
 
   const counts = {
-    ALL: ideas.length,
-    SOUMISE: ideas.filter((i) => i.status === "SOUMISE").length,
+    ALL:       ideas.length,
+    SOUMISE:   ideas.filter((i) => i.status === "SOUMISE").length,
     APPROUVEE: ideas.filter((i) => ["APPROUVEE_INNOVATION", "APPROUVEE_BU", "APPROUVEE_DG"].includes(i.status)).length,
-    CLOTUREE: ideas.filter((i) => i.status === "CLOTUREE").length,
+    CLOTUREE:  ideas.filter((i) => i.status === "CLOTUREE").length,
   };
 
   return (
-    <div className="flex flex-1 overflow-y-auto">
-      <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
-            <div>
-              <h1 className="text-lg font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">Mes Idées</h1>
-              <p className="text-slate-500 dark:text-slate-400 mt-1 text-sm">Gérez et suivez le cycle de vie de vos propositions d&apos;innovation.</p>
-            </div>
-            <Link href="/soumettre" className="flex items-center gap-2 px-4 py-2 bg-primary text-white font-bold rounded-xl hover:opacity-90 transition-opacity shadow-lg shadow-primary/20 text-sm">
-              <span className="material-symbols-outlined">add_circle</span>
-              <span>Soumettre une idée</span>
-            </Link>
+    <div className="h-full overflow-y-auto">
+      {/* Delete error toast */}
+      {deleteError && (
+        <div className="fixed top-4 right-4 z-[100] animate-slide-in-right">
+          <div className="toast error flex items-center gap-2 pr-2">
+            <span className="material-symbols-outlined text-[16px]">error</span>
+            <span className="flex-1 text-[13px]">{deleteError}</span>
+            <button onClick={() => setDeleteError(null)} className="p-0.5 hover:bg-red-100 rounded transition-colors">
+              <span className="material-symbols-outlined text-[14px]">close</span>
+            </button>
           </div>
+        </div>
+      )}
+      <div className="max-w-5xl mx-auto px-4 md:px-6 py-5">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-5">
+          <div>
+            <h1 className="text-lg font-semibold text-neutral-900 dark:text-white">Mes Idées</h1>
+            <p className="text-[13px] text-neutral-500 mt-0.5">
+              {loading
+                ? <span className="skeleton h-3 w-40 inline-block align-middle" />
+                : `${ideas.length} idée${ideas.length !== 1 ? "s" : ""} soumise${ideas.length !== 1 ? "s" : ""}`
+              }
+            </p>
+          </div>
+          <Link href="/soumettre" className="btn-primary">
+            <span className="material-symbols-outlined text-[16px]">add</span>
+            Soumettre une idée
+          </Link>
+        </div>
 
-          <div className="flex flex-wrap items-center gap-3 mb-4 border-b border-primary/10">
+        {/* Filter */}
+        <div className="mb-4">
+          <div className="filter-tabs">
             {[
-              { key: "ALL", label: `Toutes (${counts.ALL})` },
-              { key: "SOUMISE", label: `Soumises (${counts.SOUMISE})` },
-              { key: "APPROUVEE", label: `Approuvées (${counts.APPROUVEE})` },
-              { key: "CLOTUREE", label: `Clôturées (${counts.CLOTUREE})` },
+              { key: "ALL",       label: "Toutes",     count: counts.ALL },
+              { key: "SOUMISE",   label: "Soumises",   count: counts.SOUMISE },
+              { key: "APPROUVEE", label: "Approuvées", count: counts.APPROUVEE },
+              { key: "CLOTUREE",  label: "Clôturées",  count: counts.CLOTUREE },
             ].map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => setFilter(tab.key)}
-                className={`pb-3 px-2 border-b-2 font-medium text-sm transition-colors ${
-                  filter === tab.key
-                    ? "border-primary text-primary font-bold"
-                    : "border-transparent text-slate-500 hover:text-primary"
-                }`}
-              >
-                {tab.label}
+              <button key={tab.key} onClick={() => setFilter(tab.key)}
+                className={`filter-tab${filter === tab.key ? " active" : ""}`}>
+                {tab.label} <span className="tab-count">{tab.count}</span>
               </button>
             ))}
           </div>
-
-          {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <span className="material-symbols-outlined animate-spin text-primary text-2xl">progress_activity</span>
-            </div>
-          ) : filtered.length === 0 ? (
-            <div className="text-center py-12">
-              <span className="material-symbols-outlined text-slate-300 text-4xl mb-2">lightbulb</span>
-              <p className="text-sm text-slate-400">Aucune idée pour le moment.</p>
-              <Link href="/soumettre" className="inline-flex items-center gap-1 mt-3 px-4 py-2 bg-primary text-white text-xs font-bold rounded-xl">
-                <span className="material-symbols-outlined text-sm">add</span>Soumettre une idée
-              </Link>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filtered.map((idea) => {
-                const stepIdx = getStepIndex(idea.status);
-                const cfg = statusConfig[idea.status] || statusConfig.SOUMISE;
-                const canDelete = idea.status !== "CLOTUREE";
-                return (
-                  <div key={idea.id} className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 overflow-hidden flex flex-col shadow-sm hover:shadow-xl hover:border-primary/30 hover:-translate-y-1 transition-all duration-300 group">
-                    <div className="relative h-20 w-full bg-slate-200">
-                      <div className="absolute inset-0 bg-gradient-to-br from-primary/40 to-primary/80"></div>
-                      <div className={`absolute top-3 right-3 px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${cfg.color}`}>
-                        {cfg.label}
-                      </div>
-                      {canDelete && (
-                        <button
-                          onClick={() => handleDelete(idea.id)}
-                          disabled={deleting === idea.id}
-                          className="absolute top-3 left-3 size-7 rounded-full bg-white/80 dark:bg-slate-900/80 backdrop-blur flex items-center justify-center text-red-500 hover:bg-red-500 hover:text-white transition-all opacity-0 group-hover:opacity-100"
-                          title="Supprimer cette idée"
-                        >
-                          <span className="material-symbols-outlined text-sm">
-                            {deleting === idea.id ? "progress_activity" : "delete"}
-                          </span>
-                        </button>
-                      )}
-                    </div>
-                    <div className="p-4 flex-1 flex flex-col">
-                      <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 mb-1">{idea.title}</h3>
-                      <p className="text-xs text-slate-400 mb-3">{idea.category}</p>
-                      <div className="mb-3">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Progression</p>
-                        <div className="flex items-center w-full gap-1">
-                          {statusFlow.slice(0, 3).map((s, i) => (
-                            <div key={s} className="flex flex-col items-center flex-1">
-                              <div className={`size-4 rounded-full flex items-center justify-center text-white text-[8px] ${
-                                i <= stepIdx ? "bg-primary" : "bg-slate-200 dark:bg-slate-700"
-                              }`}>
-                                {i < stepIdx ? <span className="material-symbols-outlined text-[8px]">check</span> : (i + 1)}
-                              </div>
-                              {i < 2 && <div className={`h-0.5 w-full mt-0.5 ${i < stepIdx ? "bg-primary" : "bg-slate-200 dark:bg-slate-700"}`}></div>}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                      <div className="mt-auto pt-3 border-t border-primary/5 flex items-center justify-between text-xs text-slate-400">
-                        <span>{new Date(idea.createdAt).toLocaleDateString("fr-FR")}</span>
-                        <div className="flex gap-3">
-                          <span className="flex items-center gap-1">
-                            <span className="material-symbols-outlined text-sm">chat</span>{idea.commentCount}
-                          </span>
-                          <button
-                            onClick={() => handleVote(idea.id)}
-                            className="flex items-center gap-1 text-primary font-bold hover:scale-110 transition-transform"
-                          >
-                            <span className="material-symbols-outlined text-sm">favorite</span>{idea.voteCount}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-              <Link href="/soumettre" className="bg-primary/5 dark:bg-primary/10 rounded-2xl border-2 border-dashed border-primary/20 flex flex-col items-center justify-center p-8 text-center group cursor-pointer hover:border-primary/50 hover:bg-primary/10 hover:-translate-y-1 transition-all duration-300">
-                <div className="size-12 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center text-primary mb-3 shadow-sm group-hover:scale-110 transition-transform">
-                  <span className="material-symbols-outlined text-2xl">add_box</span>
-                </div>
-                <h3 className="font-bold text-slate-900 dark:text-slate-100 text-sm">Nouvelle proposition ?</h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Partagez votre prochaine innovation.</p>
-              </Link>
-            </div>
-          )}
         </div>
+
+        {/* Content */}
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {Array.from({ length: 4 }).map((_, i) => <IdeaCardSkeleton key={i} />)}
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="card text-center py-16 flex flex-col items-center gap-3">
+            <span className="material-symbols-outlined text-[40px] text-neutral-300">lightbulb</span>
+            <p className="text-[14px] text-neutral-500">Aucune idée pour le moment.</p>
+            <Link href="/soumettre" className="btn-primary mt-2">Soumettre une idée</Link>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 stagger">
+            {filtered.map((idea) => (
+              <IdeaCard
+                key={idea.id}
+                idea={idea}
+                canDeleteIdea={getDeletable(idea)}
+                deleting={deleting}
+                votingId={votingId}
+                justVoted={justVoted}
+                onDelete={handleDelete}
+                onVote={handleVote}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -2,10 +2,12 @@ package com.innovhub.controller;
 
 import com.innovhub.dto.response.ApiResponse;
 import com.innovhub.dto.response.CampaignResponse;
+import com.innovhub.dto.response.IdeaSummaryResponse;
 import com.innovhub.entity.User;
 import com.innovhub.exception.ResourceNotFoundException;
 import com.innovhub.repository.UserRepository;
 import com.innovhub.service.CampaignService;
+import com.innovhub.service.IdeaService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -27,6 +29,7 @@ import java.util.UUID;
 public class CampaignController {
 
     private final CampaignService campaignService;
+    private final IdeaService ideaService;
     private final UserRepository userRepository;
 
     private User getCurrentUser() {
@@ -47,6 +50,20 @@ public class CampaignController {
     public ResponseEntity<ApiResponse<CampaignResponse>> getCampaign(@PathVariable String id) {
         CampaignResponse result = campaignService.getCampaignById(id);
         return ResponseEntity.ok(ApiResponse.ok(result));
+    }
+
+    @GetMapping("/{id}/ideas")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<Page<IdeaSummaryResponse>>> getCampaignIdeas(@PathVariable String id, Pageable pageable) {
+        Page<IdeaSummaryResponse> result = ideaService.getIdeasByCampaign(id, pageable);
+        return ResponseEntity.ok(ApiResponse.ok(result));
+    }
+
+    @PatchMapping("/{id}/close")
+    @PreAuthorize("hasRole('RESPONSABLE_INNOVATION')")
+    public ResponseEntity<ApiResponse<CampaignResponse>> closeCampaign(@PathVariable String id) {
+        CampaignResponse result = campaignService.closeCampaign(id, getCurrentUser());
+        return ResponseEntity.ok(ApiResponse.ok("Campagne terminée", result));
     }
 
     @PostMapping

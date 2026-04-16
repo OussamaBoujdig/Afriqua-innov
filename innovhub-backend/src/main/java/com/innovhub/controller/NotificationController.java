@@ -16,8 +16,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.UUID;
-
 @RestController
 @RequestMapping("/notifications")
 @RequiredArgsConstructor
@@ -51,8 +49,16 @@ public class NotificationController {
 
     @PatchMapping("/{id}/read")
     public ResponseEntity<ApiResponse<Void>> markAsRead(@PathVariable String id) {
-        notificationService.markAsRead(id);
+        User user = getCurrentUser();
+        notificationService.markAsRead(id, user.getId());
         return ResponseEntity.ok(ApiResponse.ok("Notification marquée comme lue", null));
+    }
+
+    @DeleteMapping
+    public ResponseEntity<ApiResponse<Void>> clearAll() {
+        User user = getCurrentUser();
+        notificationService.clearAll(user.getId());
+        return ResponseEntity.ok(ApiResponse.ok("Toutes les notifications supprimées", null));
     }
 
     private User getCurrentUser() {

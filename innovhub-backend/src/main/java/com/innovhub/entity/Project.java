@@ -40,6 +40,10 @@ public class Project {
     @Builder.Default
     private Integer stageProgress = 0;
 
+    @Column(nullable = false, length = 20)
+    @Builder.Default
+    private String status = "EN_COURS";
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id", nullable = false)
     private User owner;

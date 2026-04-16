@@ -17,5 +17,8 @@ public class DocumentResponse {
     private String fileType;
     private Long fileSizeBytes;
     private String uploadedByName;
+    private String taskId;
+    private String taskTitle;
     private Instant createdAt;
+    private String downloadUrl;
 }

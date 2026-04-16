@@ -24,6 +24,10 @@ public class Document {
     @JoinColumn(name = "project_id")
     private Project project;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "task_id")
+    private ProjectTask task;
+
     @Column(name = "file_name", nullable = false)
     private String fileName;
 

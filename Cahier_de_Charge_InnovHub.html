@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cahier de Charge - Innov'Hub</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  @page {
+    size: A4;
+    margin: 20mm 18mm 25mm 18mm;
+  }
+
+  @media print {
+    body { font-size: 10pt; }
+    .page-break { page-break-before: always; }
+    .no-print { display: none; }
+    h1, h2, h3 { page-break-after: avoid; }
+    table { page-break-inside: avoid; }
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    font-size: 11pt;
+    line-height: 1.6;
+    color: #1a1a2e;
+    background: #fff;
+    max-width: 210mm;
+    margin: 0 auto;
+    padding: 20mm 18mm;
+  }
+
+  /* Cover Page */
+  .cover {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 90vh;
+    text-align: center;
+    border: 3px solid #6c3fc6;
+    border-radius: 12px;
+    padding: 60px 40px;
+    background: linear-gradient(135deg, #f8f6ff 0%, #fff 50%, #f0ebff 100%);
+  }
+
+  .cover-logo {
+    width: 80px; height: 80px;
+    background: linear-gradient(135deg, #6c3fc6, #5a2fb0);
+    border-radius: 20px;
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 36px; font-weight: 800;
+    margin-bottom: 30px;
+    box-shadow: 0 8px 30px rgba(108,63,198,0.3);
+  }
+
+  .cover h1 {
+    font-size: 32pt;
+    font-weight: 800;
+    color: #6c3fc6;
+    letter-spacing: -0.5px;
+    margin-bottom: 8px;
+  }
+
+  .cover .subtitle {
+    font-size: 16pt;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 40px;
+  }
+
+  .cover .doc-title {
+    font-size: 22pt;
+    font-weight: 700;
+    color: #1a1a2e;
+    border-top: 2px solid #6c3fc6;
+    border-bottom: 2px solid #6c3fc6;
+    padding: 16px 0;
+    margin-bottom: 40px;
+  }
+
+  .cover-meta {
+    text-align: left;
+    background: #f8f6ff;
+    border-radius: 10px;
+    padding: 20px 28px;
+    border: 1px solid #e8e0f5;
+    width: 100%;
+    max-width: 400px;
+  }
+
+  .cover-meta p {
+    font-size: 10pt;
+    color: #555;
+    margin-bottom: 6px;
+  }
+
+  .cover-meta strong { color: #1a1a2e; }
+
+  /* Headings */
+  h1 {
+    font-size: 20pt;
+    font-weight: 800;
+    color: #6c3fc6;
+    border-bottom: 3px solid #6c3fc6;
+    padding-bottom: 8px;
+    margin: 40px 0 20px 0;
+    letter-spacing: -0.3px;
+  }
+
+  h2 {
+    font-size: 15pt;
+    font-weight: 700;
+    color: #1a1a2e;
+    border-left: 4px solid #6c3fc6;
+    padding-left: 14px;
+    margin: 30px 0 14px 0;
+  }
+
+  h3 {
+    font-size: 12pt;
+    font-weight: 600;
+    color: #333;
+    margin: 20px 0 10px 0;
+  }
+
+  h4 {
+    font-size: 11pt;
+    font-weight: 600;
+    color: #6c3fc6;
+    margin: 14px 0 8px 0;
+  }
+
+  p { margin-bottom: 10px; }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0 20px 0;
+    font-size: 9.5pt;
+  }
+
+  th {
+    background: #6c3fc6;
+    color: white;
+    font-weight: 600;
+    padding: 10px 12px;
+    text-align: left;
+    font-size: 9pt;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  td {
+    padding: 8px 12px;
+    border-bottom: 1px solid #eee;
+    vertical-align: top;
+  }
+
+  tr:nth-child(even) td { background: #faf8ff; }
+  tr:hover td { background: #f0ebff; }
+
+  /* Lists */
+  ul, ol { margin: 8px 0 14px 22px; }
+  li { margin-bottom: 5px; }
+
+  /* Code */
+  code {
+    background: #f4f0ff;
+    color: #6c3fc6;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 9pt;
+    font-family: 'Courier New', monospace;
+  }
+
+  pre {
+    background: #1a1a2e;
+    color: #e0e0e0;
+    padding: 16px;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-size: 9pt;
+    margin: 10px 0 16px 0;
+    line-height: 1.5;
+  }
+
+  /* Boxes */
+  .info-box {
+    background: #f0ebff;
+    border-left: 4px solid #6c3fc6;
+    padding: 14px 18px;
+    border-radius: 0 8px 8px 0;
+    margin: 14px 0;
+    font-size: 10pt;
+  }
+
+  .warning-box {
+    background: #fff8e1;
+    border-left: 4px solid #f59e0b;
+    padding: 14px 18px;
+    border-radius: 0 8px 8px 0;
+    margin: 14px 0;
+    font-size: 10pt;
+  }
+
+  /* TOC */
+  .toc {
+    background: #faf8ff;
+    border: 1px solid #e8e0f5;
+    border-radius: 10px;
+    padding: 24px 30px;
+    margin: 20px 0 30px 0;
+  }
+
+  .toc h2 { border: none; padding: 0; margin: 0 0 16px 0; }
+
+  .toc ol { counter-reset: toc-counter; list-style: none; margin: 0; padding: 0; }
+  .toc > ol > li { counter-increment: toc-counter; margin-bottom: 8px; }
+  .toc > ol > li::before {
+    content: counter(toc-counter) ".";
+    font-weight: 700; color: #6c3fc6; margin-right: 8px;
+  }
+  .toc a { text-decoration: none; color: #1a1a2e; font-weight: 500; }
+  .toc a:hover { color: #6c3fc6; }
+  .toc .sub { margin-left: 24px; font-size: 10pt; color: #666; margin-top: 4px; }
+
+  /* Tag */
+  .tag {
+    display: inline-block;
+    background: #f0ebff;
+    color: #6c3fc6;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 8.5pt;
+    font-weight: 600;
+    margin: 2px 4px 2px 0;
+  }
+
+  .tag-green { background: #e8faf0; color: #059669; }
+  .tag-amber { background: #fef3c7; color: #d97706; }
+  .tag-red { background: #fee2e2; color: #dc2626; }
+  .tag-blue { background: #dbeafe; color: #2563eb; }
+
+  /* Diagram */
+  .flow-diagram {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    margin: 14px 0;
+    font-size: 9pt;
+  }
+
+  .flow-step {
+    background: #f0ebff;
+    color: #6c3fc6;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-weight: 600;
+    border: 1px solid #ddd0f5;
+  }
+
+  .flow-arrow { color: #999; font-size: 14pt; }
+
+  .separator {
+    border: none;
+    height: 1px;
+    background: linear-gradient(to right, transparent, #6c3fc6, transparent);
+    margin: 30px 0;
+  }
+
+  .print-btn {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: #6c3fc6;
+    color: white;
+    border: none;
+    padding: 14px 28px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(108,63,198,0.4);
+    z-index: 100;
+    font-family: 'Inter', sans-serif;
+  }
+  .print-btn:hover { background: #5a2fb0; }
+</style>
+</head>
+<body>
+
+<button class="print-btn no-print" onclick="window.print()">Imprimer / Exporter PDF</button>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- PAGE DE COUVERTURE -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="cover">
+  <div class="cover-logo">IH</div>
+  <h1>Innov'Hub</h1>
+  <p class="subtitle">Plateforme de Gestion de l'Innovation d'Entreprise</p>
+  <p class="doc-title">CAHIER DE CHARGE FONCTIONNEL ET TECHNIQUE</p>
+  <div class="cover-meta">
+    <p><strong>Version :</strong> 1.0</p>
+    <p><strong>Date :</strong> 14 Avril 2026</p>
+    <p><strong>Statut :</strong> Document final</p>
+    <p><strong>Classification :</strong> Confidentiel</p>
+    <p><strong>Auteur :</strong> Equipe Innov'Hub</p>
+  </div>
+</div>
+
+<div class="page-break"></div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- TABLE DES MATIERES -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="toc">
+  <h2>Table des Matieres</h2>
+  <ol>
+    <li><a href="#s1">Presentation Generale du Projet</a>
+      <div class="sub">1.1 Contexte - 1.2 Objectifs - 1.3 Perimetre - 1.4 Parties prenantes</div>
+    </li>
+    <li><a href="#s2">Specifications Fonctionnelles</a>
+      <div class="sub">2.1 Gestion des utilisateurs - 2.2 Soumission d'idees - 2.3 Workflow d'approbation - 2.4 Systeme de scoring - 2.5 Campagnes - 2.6 Gestion de projets - 2.7 Collaboration - 2.8 Notifications - 2.9 Tableau de bord - 2.10 Chatbot IA</div>
+    </li>
+    <li><a href="#s3">Roles et Permissions</a>
+      <div class="sub">3.1 Matrice des roles - 3.2 Controle d'acces par page</div>
+    </li>
+    <li><a href="#s4">Architecture Technique</a>
+      <div class="sub">4.1 Stack technique - 4.2 Architecture logicielle - 4.3 Modele de donnees</div>
+    </li>
+    <li><a href="#s5">Specifications Techniques Backend</a>
+      <div class="sub">5.1 Entites - 5.2 API REST - 5.3 Securite - 5.4 WebSocket</div>
+    </li>
+    <li><a href="#s6">Specifications Techniques Frontend</a>
+      <div class="sub">6.1 Pages et routes - 6.2 Composants - 6.3 Gestion d'etat</div>
+    </li>
+    <li><a href="#s7">Modele de Donnees</a>
+      <div class="sub">7.1 Schema des entites - 7.2 Relations</div>
+    </li>
+    <li><a href="#s8">API REST - Catalogue Complet</a>
+      <div class="sub">8.1 Authentification - 8.2 Idees - 8.3 Campagnes - 8.4 Projets - 8.5 Utilisateurs - 8.6 Notifications - 8.7 Documents</div>
+    </li>
+    <li><a href="#s9">Interfaces Utilisateur (UI/UX)</a>
+      <div class="sub">9.1 Charte graphique - 9.2 Ecrans principaux - 9.3 Responsive design</div>
+    </li>
+    <li><a href="#s10">Exigences Non Fonctionnelles</a>
+      <div class="sub">10.1 Performance - 10.2 Securite - 10.3 Disponibilite - 10.4 Accessibilite</div>
+    </li>
+    <li><a href="#s11">Contraintes et Dependances</a></li>
+    <li><a href="#s12">Glossaire</a></li>
+  </ol>
+</div>
+
+<div class="page-break"></div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- 1. PRESENTATION GENERALE -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<h1 id="s1">1. Presentation Generale du Projet</h1>
+
+<h2>1.1 Contexte</h2>
+<p>Dans un environnement economique en mutation rapide, l'innovation constitue un levier strategique majeur pour les entreprises. <strong>Innov'Hub</strong> est une plateforme web de gestion de l'innovation d'entreprise qui permet de centraliser, evaluer, et piloter les idees innovantes depuis leur soumission jusqu'a leur deploiement en projet concret.</p>
+<p>La plateforme repond au besoin de structurer le processus d'innovation en offrant un workflow complet de validation multi-niveaux, un systeme de scoring collaboratif, et des outils de suivi de projet integres.</p>
+
+<h2>1.2 Objectifs</h2>
+<ul>
+  <li><strong>Centraliser</strong> la collecte d'idees innovantes au sein de l'organisation</li>
+  <li><strong>Structurer</strong> le processus de validation via un workflow multi-niveaux hierarchique</li>
+  <li><strong>Evaluer</strong> objectivement chaque idee grace a un systeme de scoring multicritere</li>
+  <li><strong>Piloter</strong> la transformation des idees approuvees en projets concrets</li>
+  <li><strong>Collaborer</strong> en temps reel entre les equipes via la messagerie et les notifications</li>
+  <li><strong>Mesurer</strong> la performance de l'innovation via des KPIs et tableaux de bord</li>
+  <li><strong>Gamifier</strong> l'innovation avec un systeme de points et un classement des innovateurs</li>
+</ul>
+
+<h2>1.3 Perimetre du Projet</h2>
+<table>
+  <tr><th>Composante</th><th>Description</th><th>Statut</th></tr>
+  <tr><td>Gestion des utilisateurs</td><td>Inscription, authentification, roles, profils</td><td><span class="tag-green tag">Inclus</span></td></tr>
+  <tr><td>Soumission d'idees</td><td>Formulaire multi-etapes, brouillons, campagnes</td><td><span class="tag-green tag">Inclus</span></td></tr>
+  <tr><td>Workflow d'approbation</td><td>Kanban multi-niveaux, actions de workflow</td><td><span class="tag-green tag">Inclus</span></td></tr>
+  <tr><td>Scoring multicritere</td><td>5 criteres, multi-evaluateurs, deadlines</td><td><span class="tag-green tag">Inclus</span></td></tr>
+  <tr><td>Campagnes d'innovation</td><td>Creation, gestion du cycle de vie, suivi</td><td><span class="tag-green tag">Inclus</span></td></tr>
+  <tr><td>Gestion de projets</td><td>Etapes, livrables, taches, equipe, documents</td><td><span class="tag-green tag">Inclus</span></td></tr>
+  <tr><td>Messagerie temps reel</td><td>Chat d'equipe par projet via WebSocket</td><td><span class="tag-green tag">Inclus</span></td></tr>
+  <tr><td>Notifications</td><td>Temps reel (WebSocket) + polling</td><td><span class="tag-green tag">Inclus</span></td></tr>
+  <tr><td>Chatbot IA</td><td>Assistant conversationnel integre</td><td><span class="tag-green tag">Inclus</span></td></tr>
+  <tr><td>Tableau de bord</td><td>KPIs, pipeline, classement innovateurs</td><td><span class="tag-green tag">Inclus</span></td></tr>
+</table>
+
+<h2>1.4 Parties Prenantes</h2>
+<table>
+  <tr><th>Role</th><th>Responsabilite</th></tr>
+  <tr><td><strong>Porteur d'idee</strong></td><td>Soumet des idees, vote, commente, participe aux projets</td></tr>
+  <tr><td><strong>Responsable Innovation</strong></td><td>Administre la plateforme, cree campagnes/utilisateurs, valide en 1er niveau</td></tr>
+  <tr><td><strong>Directeur BU</strong></td><td>Valide les idees au niveau Business Unit (2eme niveau)</td></tr>
+  <tr><td><strong>Directeur General</strong></td><td>Valide les idees au plus haut niveau (3eme niveau), vision strategique</td></tr>
+</table>
+
+<hr class="separator">
+<div class="page-break"></div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- 2. SPECIFICATIONS FONCTIONNELLES -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<h1 id="s2">2. Specifications Fonctionnelles</h1>
+
+<h2>2.1 Module Authentification et Gestion des Utilisateurs</h2>
+
+<h3>2.1.1 Authentification</h3>
+<ul>
+  <li>Connexion par email et mot de passe</li>
+  <li>Inscription avec : email, mot de passe, prenom, nom, role, departement, business unit</li>
+  <li>Authentification basee sur <strong>JWT</strong> (JSON Web Token) avec access token + refresh token</li>
+  <li>Deconnexion avec invalidation du token</li>
+  <li>Stockage des tokens dans <code>localStorage</code></li>
+  <li>Expiration automatique avec redirection vers la page de connexion</li>
+</ul>
+
+<h3>2.1.2 Gestion des utilisateurs (Admin)</h3>
+<ul>
+  <li>CRUD complet des utilisateurs (reserve au Responsable Innovation)</li>
+  <li>Attribution et modification des roles</li>
+  <li>Recherche par nom, email, role</li>
+  <li>Suppression avec confirmation modale</li>
+  <li>Interdiction de modifier son propre role</li>
+</ul>
+
+<h3>2.1.3 Profil utilisateur</h3>
+<ul>
+  <li>Affichage : nom, email, role, departement, business unit</li>
+  <li>Statistiques personnelles : nombre d'idees, points, votes recus</li>
+  <li>Historique des 5 dernieres idees soumises</li>
+  <li>Avatar (initiales generees automatiquement)</li>
+</ul>
+
+<h2>2.2 Module Soumission d'Idees</h2>
+
+<h3>2.2.1 Formulaire multi-etapes (3 etapes)</h3>
+<table>
+  <tr><th>Etape</th><th>Champs</th><th>Obligatoire</th></tr>
+  <tr><td><strong>1. Details du concept</strong></td><td>Titre, Categorie, Problematique, Solution proposee</td><td>Oui (tous)</td></tr>
+  <tr><td><strong>2. Impact & ROI</strong></td><td>ROI estime, Cout estime (EUR), Campagne associee, Pieces jointes</td><td>Non</td></tr>
+  <tr><td><strong>3. Recapitulatif</strong></td><td>Resume de toutes les informations saisies</td><td>-</td></tr>
+</table>
+
+<h3>2.2.2 Categories d'idees</h3>
+<div style="margin: 10px 0;">
+  <span class="tag">Technologie & IT</span>
+  <span class="tag-amber tag">Operations & Logistique</span>
+  <span class="tag-blue tag">Ressources Humaines</span>
+  <span class="tag-red tag">Marketing & Ventes</span>
+  <span class="tag-green tag">RSE & Environnement</span>
+</div>
+
+<h3>2.2.3 Fonctionnalites</h3>
+<ul>
+  <li>Sauvegarde en brouillon (statut <code>BROUILLON</code>)</li>
+  <li>Soumission definitive (statut <code>SOUMISE</code>)</li>
+  <li>Upload de pieces jointes (documents, images, max 10 Mo)</li>
+  <li>Association optionnelle a une campagne</li>
+  <li>Barre de progression visuelle</li>
+  <li>Validation par etape avant passage a l'etape suivante</li>
+  <li>Ecran de confirmation avec redirection automatique</li>
+</ul>
+
+<h2>2.3 Workflow d'Approbation</h2>
+
+<h3>2.3.1 Cycle de vie d'une idee</h3>
+<div class="flow-diagram">
+  <span class="flow-step">BROUILLON</span>
+  <span class="flow-arrow">&rarr;</span>
+  <span class="flow-step">SOUMISE</span>
+  <span class="flow-arrow">&rarr;</span>
+  <span class="flow-step">EN_VALIDATION</span>
+  <span class="flow-arrow">&rarr;</span>
+  <span class="flow-step">SCOREE</span>
+  <span class="flow-arrow">&rarr;</span>
+  <span class="flow-step">APPROUVEE_INNOVATION</span>
+  <span class="flow-arrow">&rarr;</span>
+  <span class="flow-step">APPROUVEE_BU</span>
+  <span class="flow-arrow">&rarr;</span>
+  <span class="flow-step">APPROUVEE_DG</span>
+  <span class="flow-arrow">&rarr;</span>
+  <span class="flow-step">EN_INCUBATION</span>
+  <span class="flow-arrow">&rarr;</span>
+  <span class="flow-step">CLOTUREE</span>
+</div>
+<p style="margin-top: 6px; font-size: 10pt; color: #666;">A tout moment, une idee peut etre <span class="tag-red tag">REJETEE</span></p>
+
+<h3>2.3.2 Interface Kanban</h3>
+<ul>
+  <li>Tableau Kanban avec une colonne par statut</li>
+  <li>Cartes cliquables avec categorie, titre, score, auteur</li>
+  <li>Panneau de detail lateral avec informations completes</li>
+  <li>Boutons d'action contextuels (approuver, rejeter, scorer)</li>
+  <li>Gestion des deadlines de scoring</li>
+  <li>Barre de progression du scoring (nombre d'evaluations requises vs completees)</li>
+</ul>
+
+<h3>2.3.3 Actions de workflow</h3>
+<table>
+  <tr><th>Action</th><th>Transition</th><th>Role autorise</th></tr>
+  <tr><td>Soumettre</td><td>BROUILLON &rarr; SOUMISE</td><td>Porteur d'idee</td></tr>
+  <tr><td>Mettre en validation</td><td>SOUMISE &rarr; EN_VALIDATION</td><td>Resp. Innovation</td></tr>
+  <tr><td>Score termine</td><td>EN_VALIDATION &rarr; SCOREE</td><td>Systeme (automatique)</td></tr>
+  <tr><td>Approuver (Niveau 1)</td><td>SCOREE &rarr; APPROUVEE_INNOVATION</td><td>Resp. Innovation</td></tr>
+  <tr><td>Approuver (Niveau 2)</td><td>APPROUVEE_INNOVATION &rarr; APPROUVEE_BU</td><td>Directeur BU</td></tr>
+  <tr><td>Approuver (Niveau 3)</td><td>APPROUVEE_BU &rarr; APPROUVEE_DG</td><td>Directeur General</td></tr>
+  <tr><td>Incuber</td><td>APPROUVEE_DG &rarr; EN_INCUBATION</td><td>Resp. Innovation</td></tr>
+  <tr><td>Cloturer</td><td>EN_INCUBATION &rarr; CLOTUREE</td><td>Resp. Innovation</td></tr>
+  <tr><td>Rejeter</td><td>Tout statut &rarr; REJETEE</td><td>Resp. Innovation, Dir. BU, Dir. General</td></tr>
+</table>
+
+<h2>2.4 Systeme de Scoring Multicritere</h2>
+
+<h3>2.4.1 Criteres d'evaluation</h3>
+<table>
+  <tr><th>Critere</th><th>Description</th><th>Echelle</th></tr>
+  <tr><td><strong>Niveau d'innovation</strong></td><td>Degre de nouveaute et d'originalite de l'idee</td><td>1 a 10</td></tr>
+  <tr><td><strong>Faisabilite technique</strong></td><td>Complexite de mise en oeuvre et ressources necessaires</td><td>1 a 10</td></tr>
+  <tr><td><strong>Alignement strategique</strong></td><td>Coherence avec la strategie et les objectifs de l'entreprise</td><td>1 a 10</td></tr>
+  <tr><td><strong>Potentiel ROI</strong></td><td>Retour sur investissement estime</td><td>1 a 10</td></tr>
+  <tr><td><strong>Niveau de risque</strong></td><td>Evaluation des risques associes</td><td>1 a 10</td></tr>
+</table>
+
+<h3>2.4.2 Regles de scoring</h3>
+<ul>
+  <li>Chaque evaluateur (Resp. Innovation, Dir. BU, Dir. General) score une seule fois</li>
+  <li>Commentaires optionnels avec chaque evaluation</li>
+  <li>Score total = moyenne ponderee des evaluations</li>
+  <li>Possibilite de definir une deadline de scoring</li>
+  <li>Notification aux evaluateurs lorsqu'une idee est prete a etre scoree</li>
+  <li>Progression affichee : nombre d'evaluations completees / requises</li>
+</ul>
+
+<h2>2.5 Module Campagnes d'Innovation</h2>
+
+<h3>2.5.1 Cycle de vie d'une campagne</h3>
+<div class="flow-diagram">
+  <span class="flow-step">A_VENIR</span>
+  <span class="flow-arrow">&rarr;</span>
+  <span class="flow-step">ACTIF</span>
+  <span class="flow-arrow">&rarr;</span>
+  <span class="flow-step">TERMINEE</span>
+</div>
+
+<h3>2.5.2 Fonctionnalites</h3>
+<ul>
+  <li><strong>Creation</strong> (Resp. Innovation, Dir. BU, Dir. General) : titre, description, categorie, image de couverture, dates de debut/fin</li>
+  <li><strong>Categories de campagne</strong> : Ecologie, Technologie, Culture, Donnees, Logistique, RH</li>
+  <li><strong>Visualisation</strong> : grille/liste avec filtres par statut, recherche, tri</li>
+  <li><strong>Detail</strong> : informations de la campagne + idees associees</li>
+  <li><strong>Soumission d'idees</strong> directement dans le contexte d'une campagne</li>
+  <li><strong>Terminaison</strong> manuelle par le Resp. Innovation</li>
+  <li><strong>Barre de progression temporelle</strong> (debut &rarr; fin)</li>
+  <li><strong>Apercu en temps reel</strong> lors de la creation</li>
+</ul>
+
+<h2>2.6 Module Gestion de Projets</h2>
+
+<h3>2.6.1 Etapes d'un projet</h3>
+<div class="flow-diagram">
+  <span class="flow-step">EXPLORATION</span>
+  <span class="flow-arrow">&rarr;</span>
+  <span class="flow-step">CONCEPTUALISATION</span>
+  <span class="flow-arrow">&rarr;</span>
+  <span class="flow-step">PILOTE</span>
+  <span class="flow-arrow">&rarr;</span>
+  <span class="flow-step">MISE A L'ECHELLE</span>
+</div>
+
+<h3>2.6.2 Fonctionnalites</h3>
+<ul>
+  <li><strong>Creation de projet</strong> a partir d'une idee approuvee (passage en incubation)</li>
+  <li><strong>Avancement d'etape</strong> : progression lineaire dans les 4 phases</li>
+  <li><strong>Indicateur de progression</strong> : pourcentage modifiable manuellement</li>
+  <li><strong>Gestion d'equipe</strong> :
+    <ul>
+      <li>Invitation de membres par le Resp. Innovation</li>
+      <li>Attribution de roles d'equipe (Chef de projet, membre, etc.)</li>
+      <li>Acceptation/refus des invitations par les invites</li>
+      <li>Modification/suppression de membres</li>
+      <li>Deadline de reponse aux invitations</li>
+    </ul>
+  </li>
+  <li><strong>Gestion des taches</strong> :
+    <ul>
+      <li>Creation avec titre, description, etape, assignation, date d'echeance</li>
+      <li>Statuts : A_FAIRE, EN_COURS, TERMINEE</li>
+      <li>Upload de documents par tache</li>
+      <li>Modification et suppression</li>
+    </ul>
+  </li>
+  <li><strong>Livrables</strong> :
+    <ul>
+      <li>Creation par etape</li>
+      <li>Bascule complete/incomplete</li>
+      <li>Suppression</li>
+    </ul>
+  </li>
+  <li><strong>Documents du projet</strong> : upload et telechargement</li>
+  <li><strong>Messagerie d'equipe</strong> : chat integre en temps reel</li>
+</ul>
+
+<h2>2.7 Module Collaboration</h2>
+
+<h3>2.7.1 Systeme de vote</h3>
+<ul>
+  <li>Un utilisateur peut voter pour une idee (1 vote par utilisateur par idee)</li>
+  <li>Compteur de votes affiche sur les cartes d'idees</li>
+</ul>
+
+<h3>2.7.2 Commentaires</h3>
+<ul>
+  <li>Commentaires sur les idees</li>
+  <li>Support des reponses imbriquees (parentId)</li>
+</ul>
+
+<h3>2.7.3 Messagerie temps reel</h3>
+<ul>
+  <li>Chat par projet via WebSocket (protocole STOMP)</li>
+  <li>Support des pieces jointes</li>
+  <li>Indicateur de connexion (vert/rouge)</li>
+  <li>Regroupement des messages par date</li>
+  <li>Couleurs par role d'utilisateur</li>
+  <li>Auto-scroll vers le dernier message</li>
+</ul>
+
+<h2>2.8 Module Notifications</h2>
+<ul>
+  <li>Notifications en temps reel via WebSocket (STOMP)</li>
+  <li>Polling de secours toutes les 15 secondes</li>
+  <li>Panneau deroulant dans le header</li>
+  <li>Compteur de notifications non lues avec badge</li>
+  <li>Actions : marquer comme lu, marquer tout comme lu</li>
+  <li>Navigation vers la ressource concernee au clic</li>
+  <li>Notifications d'invitations en temps reel</li>
+</ul>
+
+<h2>2.9 Tableau de Bord</h2>
+<ul>
+  <li><strong>4 KPIs principaux</strong> : Total idees, En cours, Validees, Deployees</li>
+  <li><strong>Pipeline d'innovation</strong> : diagramme en barres horizontales par statut</li>
+  <li><strong>Idees recentes</strong> : tableau avec titre, auteur, score, statut</li>
+  <li><strong>Top Innovateurs</strong> : classement avec medailles et points</li>
+  <li><strong>CTA</strong> : carte d'incitation a soumettre une nouvelle idee</li>
+</ul>
+
+<h2>2.10 Chatbot IA</h2>
+<ul>
+  <li>Widget flottant en bas a droite de l'ecran</li>
+  <li>Envoi de messages texte vers l'API <code>/chatbot</code></li>
+  <li>Affichage des reponses du chatbot</li>
+  <li>Interface conversationnelle avec historique</li>
+</ul>
+
+<hr class="separator">
+<div class="page-break"></div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- 3. ROLES ET PERMISSIONS -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<h1 id="s3">3. Roles et Permissions</h1>
+
+<h2>3.1 Matrice des Roles</h2>
+<table>
+  <tr>
+    <th>Fonctionnalite</th>
+    <th>Porteur d'idee</th>
+    <th>Resp. Innovation</th>
+    <th>Directeur BU</th>
+    <th>Directeur General</th>
+  </tr>
+  <tr><td>Soumettre une idee</td><td>&#10004;</td><td>&#10008;</td><td>&#10008;</td><td>&#10008;</td></tr>
+  <tr><td>Voir ses idees</td><td>&#10004;</td><td>&#10004;</td><td>&#10004;</td><td>&#10004;</td></tr>
+  <tr><td>Voir toutes les idees</td><td>&#10008;</td><td>&#10004;</td><td>&#10004;</td><td>&#10004;</td></tr>
+  <tr><td>Voter sur une idee</td><td>&#10004;</td><td>&#10004;</td><td>&#10004;</td><td>&#10004;</td></tr>
+  <tr><td>Commenter une idee</td><td>&#10004;</td><td>&#10004;</td><td>&#10004;</td><td>&#10004;</td></tr>
+  <tr><td>Scorer une idee</td><td>&#10008;</td><td>&#10004;</td><td>&#10004;</td><td>&#10004;</td></tr>
+  <tr><td>Approuver (Niveau 1)</td><td>&#10008;</td><td>&#10004;</td><td>&#10008;</td><td>&#10008;</td></tr>
+  <tr><td>Approuver (Niveau 2)</td><td>&#10008;</td><td>&#10008;</td><td>&#10004;</td><td>&#10008;</td></tr>
+  <tr><td>Approuver (Niveau 3)</td><td>&#10008;</td><td>&#10008;</td><td>&#10008;</td><td>&#10004;</td></tr>
+  <tr><td>Rejeter une idee</td><td>&#10008;</td><td>&#10004;</td><td>&#10004;</td><td>&#10004;</td></tr>
+  <tr><td>Creer une campagne</td><td>&#10008;</td><td>&#10004;</td><td>&#10004;</td><td>&#10004;</td></tr>
+  <tr><td>Terminer une campagne</td><td>&#10008;</td><td>&#10004;</td><td>&#10008;</td><td>&#10008;</td></tr>
+  <tr><td>Gerer les projets</td><td>&#10008;</td><td>&#10004;</td><td>&#10004;</td><td>&#10004;</td></tr>
+  <tr><td>Gerer les utilisateurs</td><td>&#10008;</td><td>&#10004;</td><td>&#10008;</td><td>&#10008;</td></tr>
+  <tr><td>Voir le tableau de bord</td><td>&#10004;</td><td>&#10004;</td><td>&#10004;</td><td>&#10004;</td></tr>
+  <tr><td>Messagerie d'equipe</td><td>&#10004;</td><td>&#10004;</td><td>&#10004;</td><td>&#10004;</td></tr>
+  <tr><td>Gerer les taches</td><td>&#10004;</td><td>&#10004;</td><td>&#10004;</td><td>&#10004;</td></tr>
+</table>
+
+<h2>3.2 Controle d'acces par page</h2>
+<table>
+  <tr><th>Page</th><th>Route</th><th>Acces</th></tr>
+  <tr><td>Connexion</td><td><code>/login</code></td><td>Public</td></tr>
+  <tr><td>Inscription</td><td><code>/register</code></td><td>Public</td></tr>
+  <tr><td>Tableau de bord</td><td><code>/</code></td><td>Tous les roles</td></tr>
+  <tr><td>Mon Profil</td><td><code>/profil</code></td><td>Tous les roles</td></tr>
+  <tr><td>Mes Idees</td><td><code>/mes-idees</code></td><td>Tous les roles</td></tr>
+  <tr><td>Soumettre</td><td><code>/soumettre</code></td><td>PORTEUR_IDEE</td></tr>
+  <tr><td>Campagnes</td><td><code>/campagnes</code></td><td>Tous les roles</td></tr>
+  <tr><td>Creer campagne</td><td><code>/campagnes/creer</code></td><td>RESP_INNOV, DIR_BU, DIR_GENERAL</td></tr>
+  <tr><td>Toutes les idees</td><td><code>/toutes-idees</code></td><td>RESP_INNOV, DIR_BU, DIR_GENERAL</td></tr>
+  <tr><td>Approbation</td><td><code>/approbation</code></td><td>RESP_INNOV, DIR_BU, DIR_GENERAL</td></tr>
+  <tr><td>Suivi projet</td><td><code>/suivi-projet</code></td><td>RESP_INNOV, DIR_BU, DIR_GENERAL</td></tr>
+  <tr><td>Mes Taches</td><td><code>/mes-taches</code></td><td>Tous les roles</td></tr>
+  <tr><td>Mes Invitations</td><td><code>/mes-invitations</code></td><td>Tous les roles</td></tr>
+  <tr><td>Messagerie</td><td><code>/messagerie</code></td><td>Tous les roles</td></tr>
+  <tr><td>Gestion utilisateurs</td><td><code>/gestion-utilisateurs</code></td><td>RESP_INNOV uniquement</td></tr>
+</table>
+
+<hr class="separator">
+<div class="page-break"></div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- 4. ARCHITECTURE TECHNIQUE -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<h1 id="s4">4. Architecture Technique</h1>
+
+<h2>4.1 Stack Technique</h2>
+<table>
+  <tr><th>Couche</th><th>Technologie</th><th>Version</th></tr>
+  <tr><td><strong>Frontend</strong></td><td>Next.js (React)</td><td>15.2.0 (React 19)</td></tr>
+  <tr><td>Langage Frontend</td><td>TypeScript</td><td>5.9.3</td></tr>
+  <tr><td>Style CSS</td><td>Tailwind CSS</td><td>4.0.0</td></tr>
+  <tr><td>Icones</td><td>Material Symbols (Google Fonts)</td><td>-</td></tr>
+  <tr><td>WebSocket Client</td><td>STOMP.js + SockJS</td><td>7.3.0</td></tr>
+  <tr><td><strong>Backend</strong></td><td>Spring Boot</td><td>3.2.3</td></tr>
+  <tr><td>Langage Backend</td><td>Java</td><td>21</td></tr>
+  <tr><td>ORM</td><td>Spring Data JPA (Hibernate)</td><td>-</td></tr>
+  <tr><td>Securite</td><td>Spring Security + JWT (JJWT)</td><td>0.12.3</td></tr>
+  <tr><td>WebSocket Server</td><td>Spring WebSocket (STOMP)</td><td>-</td></tr>
+  <tr><td>Documentation API</td><td>SpringDoc OpenAPI (Swagger)</td><td>2.3.0</td></tr>
+  <tr><td><strong>Base de donnees</strong></td><td>MySQL</td><td>8.x</td></tr>
+  <tr><td>Pool de connexions</td><td>HikariCP</td><td>5 min - 20 max</td></tr>
+  <tr><td><strong>Build</strong></td><td>Maven (Backend), npm/yarn (Frontend)</td><td>-</td></tr>
+</table>
+
+<h2>4.2 Architecture Logicielle</h2>
+
+<div class="info-box">
+  <strong>Architecture 3-tiers :</strong> Frontend SPA (Next.js) &harr; API REST (Spring Boot) &harr; Base de donnees (MySQL)
+</div>
+
+<h3>Backend - Architecture en couches</h3>
+<pre>
+com.innovhub/
+├── config/          # Configuration (Security, WebSocket, CORS)
+├── security/        # JWT (generation, validation, filtres)
+├── controller/      # Controleurs REST (endpoints)
+├── service/         # Logique metier
+├── repository/      # Acces aux donnees (Spring Data JPA)
+├── entity/          # Entites JPA (modele de donnees)
+├── dto/
+│   ├── request/     # Objets de requete
+│   └── response/    # Objets de reponse
+├── enums/           # Enumerations (roles, statuts)
+└── exception/       # Gestion des exceptions
+</pre>
+
+<h3>Frontend - Architecture Next.js App Router</h3>
+<pre>
+src/
+├── app/             # Pages (file-based routing)
+│   ├── layout.tsx   # Layout racine
+│   ├── page.tsx     # Dashboard
+│   ├── login/       # Authentification
+│   ├── profil/      # Profil utilisateur
+│   ├── soumettre/   # Soumission d'idee
+│   ├── mes-idees/   # Mes idees
+│   ├── toutes-idees/# Toutes les idees (admin)
+│   ├── campagnes/   # Campagnes + creation + detail
+│   ├── approbation/ # Tableau Kanban
+│   ├── suivi-projet/# Gestion projets
+│   ├── mes-taches/  # Taches personnelles
+│   ├── mes-invitations/ # Invitations
+│   ├── messagerie/  # Chat d'equipe
+│   └── gestion-utilisateurs/ # Admin utilisateurs
+├── components/      # Composants reutilisables
+├── context/         # Providers React (Auth)
+├── lib/             # API client
+└── hooks/           # Hooks personnalises
+</pre>
+
+<hr class="separator">
+<div class="page-break"></div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- 5. SPECIFICATIONS TECHNIQUES BACKEND -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<h1 id="s5">5. Specifications Techniques Backend</h1>
+
+<h2>5.1 Entites JPA</h2>
+
+<h3>5.1.1 User</h3>
+<table>
+  <tr><th>Champ</th><th>Type</th><th>Contraintes</th></tr>
+  <tr><td>id</td><td>String (UUID)</td><td>PK, genere automatiquement</td></tr>
+  <tr><td>email</td><td>String</td><td>Unique, non null</td></tr>
+  <tr><td>passwordHash</td><td>String</td><td>BCrypt, non null</td></tr>
+  <tr><td>firstName</td><td>String</td><td>Non null</td></tr>
+  <tr><td>lastName</td><td>String</td><td>Non null</td></tr>
+  <tr><td>role</td><td>Enum (UserRole)</td><td>PORTEUR_IDEE, RESPONSABLE_INNOVATION, DIRECTEUR_BU, DIRECTEUR_GENERAL</td></tr>
+  <tr><td>businessUnit</td><td>String</td><td>Nullable</td></tr>
+  <tr><td>department</td><td>String</td><td>Nullable</td></tr>
+  <tr><td>avatarUrl</td><td>String</td><td>Nullable</td></tr>
+  <tr><td>points</td><td>Integer</td><td>Default: 0</td></tr>
+  <tr><td>isActive</td><td>Boolean</td><td>Default: true</td></tr>
+  <tr><td>lastLoginAt</td><td>Instant</td><td>Nullable</td></tr>
+  <tr><td>createdAt / updatedAt</td><td>Instant</td><td>Auto-generated</td></tr>
+</table>
+
+<h3>5.1.2 Idea</h3>
+<table>
+  <tr><th>Champ</th><th>Type</th><th>Contraintes</th></tr>
+  <tr><td>id</td><td>String (UUID)</td><td>PK</td></tr>
+  <tr><td>title</td><td>String</td><td>Non null</td></tr>
+  <tr><td>category</td><td>String</td><td>Non null</td></tr>
+  <tr><td>problemStatement</td><td>Text (Lob)</td><td>Non null</td></tr>
+  <tr><td>proposedSolution</td><td>Text (Lob)</td><td>Non null</td></tr>
+  <tr><td>expectedRoi</td><td>String</td><td>Nullable</td></tr>
+  <tr><td>estimatedCost</td><td>Double</td><td>Nullable</td></tr>
+  <tr><td>status</td><td>Enum (IdeaStatus)</td><td>9 statuts possibles</td></tr>
+  <tr><td>totalScore</td><td>Double</td><td>Nullable, calcule</td></tr>
+  <tr><td>submittedBy</td><td>ManyToOne &rarr; User</td><td>FK</td></tr>
+  <tr><td>campaign</td><td>ManyToOne &rarr; Campaign</td><td>FK, nullable</td></tr>
+  <tr><td>imageUrl</td><td>String</td><td>Nullable</td></tr>
+  <tr><td>reference</td><td>String</td><td>Unique, auto-genere (IH-XXXX)</td></tr>
+  <tr><td>scoringDeadline</td><td>Instant</td><td>Nullable</td></tr>
+  <tr><td>voteCount</td><td>Integer</td><td>Default: 0</td></tr>
+  <tr><td>commentCount</td><td>Integer</td><td>Default: 0</td></tr>
+</table>
+
+<h3>5.1.3 IdeaScore</h3>
+<table>
+  <tr><th>Champ</th><th>Type</th><th>Description</th></tr>
+  <tr><td>id</td><td>String (UUID)</td><td>PK</td></tr>
+  <tr><td>idea</td><td>ManyToOne &rarr; Idea</td><td>FK</td></tr>
+  <tr><td>scoredBy</td><td>ManyToOne &rarr; User</td><td>FK</td></tr>
+  <tr><td>innovationLevel</td><td>Integer</td><td>1-10</td></tr>
+  <tr><td>technicalFeasibility</td><td>Integer</td><td>1-10</td></tr>
+  <tr><td>strategicAlignment</td><td>Integer</td><td>1-10</td></tr>
+  <tr><td>roiPotential</td><td>Integer</td><td>1-10</td></tr>
+  <tr><td>riskLevel</td><td>Integer</td><td>1-10</td></tr>
+  <tr><td>comments</td><td>Text</td><td>Nullable</td></tr>
+  <tr><td>totalScore</td><td>Double</td><td>Moyenne des 5 criteres</td></tr>
+</table>
+
+<h3>5.1.4 Campaign</h3>
+<table>
+  <tr><th>Champ</th><th>Type</th><th>Description</th></tr>
+  <tr><td>id</td><td>String (UUID)</td><td>PK</td></tr>
+  <tr><td>title</td><td>String</td><td>Non null</td></tr>
+  <tr><td>description</td><td>Text</td><td>Non null</td></tr>
+  <tr><td>category</td><td>String</td><td>Non null</td></tr>
+  <tr><td>categoryColor</td><td>String</td><td>Code couleur hex</td></tr>
+  <tr><td>imageUrl</td><td>String</td><td>Nullable</td></tr>
+  <tr><td>status</td><td>Enum (CampaignStatus)</td><td>ACTIF, A_VENIR, TERMINEE</td></tr>
+  <tr><td>startDate / endDate</td><td>LocalDate</td><td>Nullable</td></tr>
+  <tr><td>createdBy</td><td>ManyToOne &rarr; User</td><td>FK</td></tr>
+</table>
+
+<h3>5.1.5 Project</h3>
+<table>
+  <tr><th>Champ</th><th>Type</th><th>Description</th></tr>
+  <tr><td>id</td><td>String (UUID)</td><td>PK</td></tr>
+  <tr><td>name</td><td>String</td><td>Non null</td></tr>
+  <tr><td>idea</td><td>OneToOne &rarr; Idea</td><td>FK</td></tr>
+  <tr><td>stage</td><td>Enum (ProjectStage)</td><td>EXPLORATION, CONCEPTUALISATION, PILOTE, MISE_A_ECHELLE</td></tr>
+  <tr><td>progress</td><td>Integer</td><td>0-100, default: 0</td></tr>
+  <tr><td>deliverables</td><td>OneToMany &rarr; Deliverable</td><td>Cascade ALL</td></tr>
+  <tr><td>teamMembers</td><td>OneToMany &rarr; TeamMember</td><td>Cascade ALL</td></tr>
+</table>
+
+<h3>5.1.6 Document</h3>
+<table>
+  <tr><th>Champ</th><th>Type</th><th>Description</th></tr>
+  <tr><td>id</td><td>String (UUID)</td><td>PK</td></tr>
+  <tr><td>fileName</td><td>String</td><td>Nom original</td></tr>
+  <tr><td>fileType</td><td>String</td><td>MIME type</td></tr>
+  <tr><td>fileSize</td><td>Long</td><td>Taille en octets</td></tr>
+  <tr><td>storagePath</td><td>String</td><td>Chemin de stockage</td></tr>
+  <tr><td>idea / project / task</td><td>ManyToOne</td><td>FK (un seul rempli)</td></tr>
+  <tr><td>uploadedBy</td><td>ManyToOne &rarr; User</td><td>FK</td></tr>
+</table>
+
+<h2>5.2 Configuration Securite</h2>
+<ul>
+  <li>Authentification <strong>stateless</strong> via JWT (pas de session HTTP)</li>
+  <li>Filtre JWT intercale dans la chaine Spring Security</li>
+  <li>Routes publiques : <code>/auth/**</code>, <code>/ws/**</code>, Swagger UI</li>
+  <li>Toutes les autres routes necessitent un token valide</li>
+  <li>Hachage des mots de passe avec <strong>BCrypt</strong></li>
+  <li>CORS configure pour le frontend (<code>http://localhost:3000</code>)</li>
+  <li>Token contient : userId (subject), email, role, firstName, lastName, fullName</li>
+  <li>Duree de validite configurable (par defaut : 24h access, 7j refresh)</li>
+</ul>
+
+<h2>5.3 WebSocket (STOMP)</h2>
+<table>
+  <tr><th>Canal</th><th>Description</th><th>Usage</th></tr>
+  <tr><td><code>/topic/project/{id}/messages</code></td><td>Messages de chat d'equipe</td><td>Messagerie projet</td></tr>
+  <tr><td><code>/topic/project/{id}/updates</code></td><td>Mises a jour du projet</td><td>Equipe, taches, livrables</td></tr>
+  <tr><td><code>/user/{id}/queue/notifications</code></td><td>Notifications personnelles</td><td>Alertes temps reel</td></tr>
+  <tr><td><code>/user/{id}/queue/invitations</code></td><td>Invitations d'equipe</td><td>Invitations temps reel</td></tr>
+</table>
+
+<hr class="separator">
+<div class="page-break"></div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- 7. MODELE DE DONNEES -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<h1 id="s7">7. Modele de Donnees - Relations</h1>
+
+<h2>7.1 Diagramme des Relations</h2>
+<pre>
+  ┌──────────┐       ┌──────────────┐       ┌──────────┐
+  │   USER   │1────N│    IDEA      │N────1 │ CAMPAIGN │
+  │          │       │              │       │          │
+  │ id (PK)  │       │ id (PK)      │       │ id (PK)  │
+  │ email    │       │ title        │       │ title    │
+  │ role     │       │ status       │       │ status   │
+  │ points   │       │ totalScore   │       │ category │
+  └──────────┘       │ submittedBy  │       └──────────┘
+       │              └──────────────┘
+       │                 │    │
+       │            1────N    1────N
+       │              │         │
+       │        ┌─────────┐  ┌──────────┐
+       │        │  SCORE  │  │ DOCUMENT │
+       │        │         │  │          │
+       │        │ 5 crit. │  │ fileName │
+       │        │ total   │  │ fileType │
+       │        └─────────┘  └──────────┘
+       │
+       │1────N
+       │
+  ┌──────────────┐      ┌─────────────┐
+  │   PROJECT    │1───N│    TASK     │
+  │              │      │             │
+  │ stage        │      │ status      │
+  │ progress     │      │ assignedTo  │
+  │ idea (1:1)   │      │ dueDate     │
+  └──────────────┘      └─────────────┘
+       │
+       │1────N
+       │
+  ┌──────────────┐
+  │ TEAM_MEMBER  │
+  │              │
+  │ user (FK)    │
+  │ teamRole     │
+  │ invitation   │
+  └──────────────┘
+</pre>
+
+<h2>7.2 Tables de la base de donnees</h2>
+<table>
+  <tr><th>Table</th><th>Description</th><th>Relations principales</th></tr>
+  <tr><td>users</td><td>Utilisateurs de la plateforme</td><td>1:N ideas, 1:N scores, 1:N documents</td></tr>
+  <tr><td>ideas</td><td>Idees innovantes soumises</td><td>N:1 user, N:1 campaign, 1:N scores, 1:N documents, 1:N votes, 1:N comments</td></tr>
+  <tr><td>idea_scores</td><td>Evaluations multicriteres</td><td>N:1 idea, N:1 user</td></tr>
+  <tr><td>campaigns</td><td>Campagnes d'innovation</td><td>N:1 user (createur), 1:N ideas</td></tr>
+  <tr><td>projects</td><td>Projets d'incubation</td><td>1:1 idea, 1:N tasks, 1:N team_members, 1:N deliverables, 1:N documents</td></tr>
+  <tr><td>tasks</td><td>Taches de projet</td><td>N:1 project, N:1 user (assigne), 1:N documents</td></tr>
+  <tr><td>team_members</td><td>Membres d'equipe projet</td><td>N:1 project, N:1 user</td></tr>
+  <tr><td>deliverables</td><td>Livrables par etape</td><td>N:1 project</td></tr>
+  <tr><td>documents</td><td>Fichiers uploades</td><td>N:1 idea/project/task, N:1 user</td></tr>
+  <tr><td>votes</td><td>Votes sur les idees</td><td>N:1 idea, N:1 user</td></tr>
+  <tr><td>comments</td><td>Commentaires sur idees</td><td>N:1 idea, N:1 user, auto-ref (parent)</td></tr>
+  <tr><td>notifications</td><td>Notifications utilisateur</td><td>N:1 user</td></tr>
+  <tr><td>project_messages</td><td>Messages de chat</td><td>N:1 project, N:1 user</td></tr>
+</table>
+
+<hr class="separator">
+<div class="page-break"></div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- 8. API REST -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<h1 id="s8">8. API REST - Catalogue Complet</h1>
+
+<div class="info-box">
+  <strong>Base URL :</strong> <code>http://localhost:8081/api/v1</code><br>
+  <strong>Format :</strong> JSON<br>
+  <strong>Authentification :</strong> Bearer Token (header <code>Authorization: Bearer {JWT}</code>)
+</div>
+
+<h2>8.1 Authentification</h2>
+<table>
+  <tr><th>Methode</th><th>Endpoint</th><th>Description</th><th>Auth</th></tr>
+  <tr><td><span class="tag-green tag">POST</span></td><td><code>/auth/login</code></td><td>Connexion (email + password)</td><td>Non</td></tr>
+  <tr><td><span class="tag-green tag">POST</span></td><td><code>/auth/register</code></td><td>Inscription</td><td>Non</td></tr>
+  <tr><td><span class="tag-green tag">POST</span></td><td><code>/auth/refresh</code></td><td>Rafraichir le token</td><td>Non</td></tr>
+  <tr><td><span class="tag-green tag">POST</span></td><td><code>/auth/logout</code></td><td>Deconnexion</td><td>Oui</td></tr>
+</table>
+
+<h2>8.2 Idees</h2>
+<table>
+  <tr><th>Methode</th><th>Endpoint</th><th>Description</th></tr>
+  <tr><td><span class="tag-green tag">POST</span></td><td><code>/ideas</code></td><td>Soumettre une idee</td></tr>
+  <tr><td><span class="tag-blue tag">GET</span></td><td><code>/ideas?page=&size=</code></td><td>Toutes les idees (pagine)</td></tr>
+  <tr><td><span class="tag-blue tag">GET</span></td><td><code>/ideas/mine?page=&size=</code></td><td>Mes idees (pagine)</td></tr>
+  <tr><td><span class="tag-blue tag">GET</span></td><td><code>/ideas/{id}</code></td><td>Detail d'une idee</td></tr>
+  <tr><td><span class="tag-amber tag">PUT</span></td><td><code>/ideas/{id}</code></td><td>Modifier une idee</td></tr>
+  <tr><td><span class="tag-red tag">DELETE</span></td><td><code>/ideas/{id}</code></td><td>Supprimer une idee</td></tr>
+  <tr><td><span class="tag-green tag">POST</span></td><td><code>/ideas/{id}/score</code></td><td>Scorer une idee (5 criteres)</td></tr>
+  <tr><td><span class="tag-green tag">POST</span></td><td><code>/ideas/{id}/workflow</code></td><td>Action de workflow (approve, reject...)</td></tr>
+  <tr><td><span class="tag-amber tag">PATCH</span></td><td><code>/ideas/{id}/scoring-deadline</code></td><td>Definir deadline de scoring</td></tr>
+  <tr><td><span class="tag-green tag">POST</span></td><td><code>/ideas/{id}/vote</code></td><td>Voter pour une idee</td></tr>
+  <tr><td><span class="tag-green tag">POST</span></td><td><code>/ideas/{id}/comments</code></td><td>Commenter une idee</td></tr>
+  <tr><td><span class="tag-blue tag">GET</span></td><td><code>/ideas/{id}/documents</code></td><td>Documents d'une idee</td></tr>
+  <tr><td><span class="tag-green tag">POST</span></td><td><code>/ideas/{id}/documents</code></td><td>Upload document (multipart)</td></tr>
+</table>
+
+<h2>8.3 Campagnes</h2>
+<table>
+  <tr><th>Methode</th><th>Endpoint</th><th>Description</th></tr>
+  <tr><td><span class="tag-blue tag">GET</span></td><td><code>/campaigns?page=&size=</code></td><td>Toutes les campagnes</td></tr>
+  <tr><td><span class="tag-blue tag">GET</span></td><td><code>/campaigns/{id}</code></td><td>Detail d'une campagne</td></tr>
+  <tr><td><span class="tag-blue tag">GET</span></td><td><code>/campaigns/{id}/ideas</code></td><td>Idees de la campagne</td></tr>
+  <tr><td><span class="tag-green tag">POST</span></td><td><code>/campaigns</code></td><td>Creer une campagne</td></tr>
+  <tr><td><span class="tag-amber tag">PATCH</span></td><td><code>/campaigns/{id}/close</code></td><td>Terminer une campagne</td></tr>
+</table>
+
+<h2>8.4 Projets</h2>
+<table>
+  <tr><th>Methode</th><th>Endpoint</th><th>Description</th></tr>
+  <tr><td><span class="tag-blue tag">GET</span></td><td><code>/projects</code></td><td>Tous les projets</td></tr>
+  <tr><td><span class="tag-blue tag">GET</span></td><td><code>/projects/{id}</code></td><td>Detail d'un projet</td></tr>
+  <tr><td><span class="tag-red tag">DELETE</span></td><td><code>/projects/{id}</code></td><td>Supprimer un projet</td></tr>
+  <tr><td><span class="tag-amber tag">PATCH</span></td><td><code>/projects/{id}/stage</code></td><td>Avancer l'etape du projet</td></tr>
+  <tr><td><span class="tag-amber tag">PATCH</span></td><td><code>/projects/{id}/progress</code></td><td>Mettre a jour la progression</td></tr>
+  <tr><td colspan="3"><strong>Livrables</strong></td></tr>
+  <tr><td><span class="tag-green tag">POST</span></td><td><code>/projects/{id}/deliverables</code></td><td>Creer un livrable</td></tr>
+  <tr><td><span class="tag-amber tag">PATCH</span></td><td><code>/projects/{id}/deliverables/{did}</code></td><td>Basculer complete/incomplete</td></tr>
+  <tr><td><span class="tag-red tag">DELETE</span></td><td><code>/projects/{id}/deliverables/{did}</code></td><td>Supprimer un livrable</td></tr>
+  <tr><td colspan="3"><strong>Taches</strong></td></tr>
+  <tr><td><span class="tag-blue tag">GET</span></td><td><code>/projects/{id}/tasks</code></td><td>Taches du projet</td></tr>
+  <tr><td><span class="tag-green tag">POST</span></td><td><code>/projects/{id}/tasks</code></td><td>Creer une tache</td></tr>
+  <tr><td><span class="tag-amber tag">PATCH</span></td><td><code>/projects/{id}/tasks/{tid}</code></td><td>Modifier une tache</td></tr>
+  <tr><td><span class="tag-red tag">DELETE</span></td><td><code>/projects/{id}/tasks/{tid}</code></td><td>Supprimer une tache</td></tr>
+  <tr><td colspan="3"><strong>Equipe & Invitations</strong></td></tr>
+  <tr><td><span class="tag-blue tag">GET</span></td><td><code>/projects/{id}/team</code></td><td>Membres de l'equipe</td></tr>
+  <tr><td><span class="tag-green tag">POST</span></td><td><code>/projects/{id}/team</code></td><td>Inviter un membre</td></tr>
+  <tr><td><span class="tag-amber tag">PATCH</span></td><td><code>/projects/{id}/team/{mid}</code></td><td>Modifier le role</td></tr>
+  <tr><td><span class="tag-red tag">DELETE</span></td><td><code>/projects/{id}/team/{mid}</code></td><td>Retirer un membre</td></tr>
+  <tr><td><span class="tag-blue tag">GET</span></td><td><code>/projects/invitations/mine</code></td><td>Mes invitations recues</td></tr>
+  <tr><td><span class="tag-blue tag">GET</span></td><td><code>/projects/invitations/sent</code></td><td>Invitations envoyees</td></tr>
+  <tr><td><span class="tag-green tag">POST</span></td><td><code>/projects/invitations/{id}/respond</code></td><td>Accepter/Refuser invitation</td></tr>
+  <tr><td colspan="3"><strong>Messagerie</strong></td></tr>
+  <tr><td><span class="tag-blue tag">GET</span></td><td><code>/projects/{id}/messages</code></td><td>Messages du projet</td></tr>
+  <tr><td><span class="tag-green tag">POST</span></td><td><code>/projects/{id}/messages</code></td><td>Envoyer un message</td></tr>
+</table>
+
+<h2>8.5 Utilisateurs</h2>
+<table>
+  <tr><th>Methode</th><th>Endpoint</th><th>Description</th></tr>
+  <tr><td><span class="tag-blue tag">GET</span></td><td><code>/users/me</code></td><td>Profil de l'utilisateur connecte</td></tr>
+  <tr><td><span class="tag-blue tag">GET</span></td><td><code>/users</code></td><td>Tous les utilisateurs</td></tr>
+  <tr><td><span class="tag-green tag">POST</span></td><td><code>/users</code></td><td>Creer un utilisateur</td></tr>
+  <tr><td><span class="tag-amber tag">PATCH</span></td><td><code>/users/{id}/role</code></td><td>Modifier le role</td></tr>
+  <tr><td><span class="tag-red tag">DELETE</span></td><td><code>/users/{id}</code></td><td>Supprimer un utilisateur</td></tr>
+</table>
+
+<h2>8.6 Notifications</h2>
+<table>
+  <tr><th>Methode</th><th>Endpoint</th><th>Description</th></tr>
+  <tr><td><span class="tag-blue tag">GET</span></td><td><code>/notifications?page=&size=</code></td><td>Toutes les notifications</td></tr>
+  <tr><td><span class="tag-blue tag">GET</span></td><td><code>/notifications/unread-count</code></td><td>Nombre de non lues</td></tr>
+  <tr><td><span class="tag-amber tag">PATCH</span></td><td><code>/notifications/read-all</code></td><td>Marquer tout comme lu</td></tr>
+  <tr><td><span class="tag-amber tag">PATCH</span></td><td><code>/notifications/{id}/read</code></td><td>Marquer une comme lue</td></tr>
+  <tr><td><span class="tag-red tag">DELETE</span></td><td><code>/notifications</code></td><td>Supprimer toutes</td></tr>
+</table>
+
+<h2>8.7 Autres</h2>
+<table>
+  <tr><th>Methode</th><th>Endpoint</th><th>Description</th></tr>
+  <tr><td><span class="tag-blue tag">GET</span></td><td><code>/dashboard/stats</code></td><td>Statistiques du tableau de bord</td></tr>
+  <tr><td><span class="tag-green tag">POST</span></td><td><code>/chatbot</code></td><td>Envoyer un message au chatbot</td></tr>
+  <tr><td><span class="tag-green tag">POST</span></td><td><code>/documents/upload-image</code></td><td>Upload d'image generique</td></tr>
+  <tr><td><span class="tag-blue tag">GET</span></td><td><code>/documents/{id}/download</code></td><td>Telecharger un document</td></tr>
+  <tr><td><span class="tag-blue tag">GET</span></td><td><code>/tasks/mine</code></td><td>Mes taches (cross-projet)</td></tr>
+</table>
+
+<hr class="separator">
+<div class="page-break"></div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- 9. UI/UX -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<h1 id="s9">9. Interfaces Utilisateur (UI/UX)</h1>
+
+<h2>9.1 Charte Graphique</h2>
+<table>
+  <tr><th>Element</th><th>Valeur</th></tr>
+  <tr><td>Couleur primaire</td><td><code>#6c3fc6</code> (violet) <span style="display:inline-block;width:16px;height:16px;background:#6c3fc6;border-radius:3px;vertical-align:middle;margin-left:6px;"></span></td></tr>
+  <tr><td>Couleur primaire foncee</td><td><code>#5a2fb0</code> <span style="display:inline-block;width:16px;height:16px;background:#5a2fb0;border-radius:3px;vertical-align:middle;margin-left:6px;"></span></td></tr>
+  <tr><td>Couleur accent</td><td><code>#f97316</code> (orange) <span style="display:inline-block;width:16px;height:16px;background:#f97316;border-radius:3px;vertical-align:middle;margin-left:6px;"></span></td></tr>
+  <tr><td>Background</td><td><code>#f7f6f8</code> (light) / <code>#17131f</code> (dark)</td></tr>
+  <tr><td>Police</td><td>Inter (Google Fonts)</td></tr>
+  <tr><td>Taille de base</td><td>14px</td></tr>
+  <tr><td>Icones</td><td>Material Symbols Outlined (Google Fonts)</td></tr>
+  <tr><td>Border radius</td><td>8px (standard), 16px (cartes), 24px (grands conteneurs)</td></tr>
+</table>
+
+<h2>9.2 Ecrans Principaux</h2>
+
+<h3>9.2.1 Layout General</h3>
+<ul>
+  <li><strong>Header</strong> (56px) : logo, navigation horizontale (desktop), notifications, menu utilisateur</li>
+  <li><strong>Sidebar</strong> (224px, desktop uniquement) : navigation verticale avec sections, icones, indicateurs actifs</li>
+  <li><strong>Zone principale</strong> : contenu de la page active avec scroll vertical</li>
+  <li><strong>Navigation mobile</strong> (56px, mobile uniquement) : barre inferieure avec 5 items + FAB central</li>
+</ul>
+
+<h3>9.2.2 Composants UI Recurrents</h3>
+<ul>
+  <li><strong>Badges de statut</strong> : colores par etat (bleu=soumise, ambre=en cours, vert=approuvee, rouge=rejetee)</li>
+  <li><strong>Cartes</strong> : coins arrondis, ombres legeres, hover avec elevation</li>
+  <li><strong>Modales</strong> : overlay flou, centrees ou laterales</li>
+  <li><strong>Formulaires</strong> : labels, placeholders, focus ring violet, validation visuelle</li>
+  <li><strong>Tableaux</strong> : headers colles, alternance de couleurs, hover sur lignes</li>
+  <li><strong>Boutons</strong> : gradient primaire (principal), bordures (secondaire), rouge (danger)</li>
+  <li><strong>Etats vides</strong> : icone + texte + CTA</li>
+  <li><strong>Loaders</strong> : spinner Material Symbols avec animation rotate</li>
+</ul>
+
+<h2>9.3 Responsive Design</h2>
+<table>
+  <tr><th>Breakpoint</th><th>Comportement</th></tr>
+  <tr><td>&lt; 768px (mobile)</td><td>Navigation inferieure, colonnes empilees, sidebar masquee, tableaux simplifies</td></tr>
+  <tr><td>768px - 1023px (tablette)</td><td>Grilles 2 colonnes, sidebar masquee, navigation header simplifiee</td></tr>
+  <tr><td>&ge; 1024px (desktop)</td><td>Layout complet avec sidebar, grilles 3-4 colonnes, panneaux lateraux</td></tr>
+</table>
+
+<hr class="separator">
+<div class="page-break"></div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- 10. EXIGENCES NON FONCTIONNELLES -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<h1 id="s10">10. Exigences Non Fonctionnelles</h1>
+
+<h2>10.1 Performance</h2>
+<table>
+  <tr><th>Exigence</th><th>Objectif</th></tr>
+  <tr><td>Temps de reponse API</td><td>&lt; 500ms pour 95% des requetes</td></tr>
+  <tr><td>Temps de chargement page</td><td>&lt; 2 secondes (first contentful paint)</td></tr>
+  <tr><td>Connexions simultanees</td><td>100+ utilisateurs WebSocket</td></tr>
+  <tr><td>Pool de connexions DB</td><td>5 minimum, 20 maximum (HikariCP)</td></tr>
+  <tr><td>Taille max upload</td><td>10 Mo par fichier</td></tr>
+  <tr><td>Pagination</td><td>20 elements par page (configurable)</td></tr>
+</table>
+
+<h2>10.2 Securite</h2>
+<ul>
+  <li>Authentification JWT avec tokens signes (algorithme HMAC)</li>
+  <li>Hachage des mots de passe BCrypt (facteur de cout par defaut)</li>
+  <li>Protection CSRF desactivee (API stateless)</li>
+  <li>CORS restreint aux origines autorisees</li>
+  <li>Validation des entrees cote serveur (Bean Validation)</li>
+  <li>Controle d'acces par role sur chaque endpoint</li>
+  <li>Auto-deconnexion sur token expire (code 401)</li>
+  <li>Pas de stockage de donnees sensibles dans le JWT (hors identifiants)</li>
+</ul>
+
+<h2>10.3 Disponibilite</h2>
+<ul>
+  <li>Application web accessible 24/7</li>
+  <li>Reconnexion WebSocket automatique (delai 5 secondes)</li>
+  <li>Polling de secours pour les notifications (15 secondes)</li>
+  <li>Gestion gracieuse des erreurs avec messages utilisateur</li>
+</ul>
+
+<h2>10.4 Accessibilite</h2>
+<ul>
+  <li>Labels ARIA sur les elements interactifs</li>
+  <li>Navigation au clavier (tabindex, focus visible)</li>
+  <li>Contrastes de couleurs conformes WCAG 2.1</li>
+  <li>Icones accompagnees de texte ou labels</li>
+  <li>Support du mode sombre</li>
+</ul>
+
+<h2>10.5 Internationalisation</h2>
+<ul>
+  <li>Langue : <strong>Francais</strong> (tous les labels, messages, dates)</li>
+  <li>Format de date : <code>dd/MM/yyyy</code> (locale fr-FR)</li>
+  <li>Format monetaire : EUR avec separateur de milliers</li>
+  <li>Temps relatif : "Il y a 5m", "Il y a 2h", "Il y a 3j"</li>
+</ul>
+
+<hr class="separator">
+<div class="page-break"></div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- 11. CONTRAINTES -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<h1 id="s11">11. Contraintes et Dependances</h1>
+
+<h2>11.1 Contraintes Techniques</h2>
+<ul>
+  <li>Java 21 requis pour le backend</li>
+  <li>Node.js 18+ requis pour le frontend</li>
+  <li>MySQL 8.x pour la base de donnees</li>
+  <li>Port backend : <code>8081</code></li>
+  <li>Port frontend : <code>3000</code></li>
+  <li>Les fichiers uploades sont stockes sur le systeme de fichiers local</li>
+</ul>
+
+<h2>11.2 Dependances Externes</h2>
+<table>
+  <tr><th>Service</th><th>Usage</th><th>Criticite</th></tr>
+  <tr><td>Google Fonts</td><td>Police Inter + Material Symbols</td><td><span class="tag-amber tag">Moyenne</span></td></tr>
+  <tr><td>MySQL</td><td>Base de donnees relationnelle</td><td><span class="tag-red tag">Critique</span></td></tr>
+  <tr><td>API Chatbot</td><td>Assistant IA integre</td><td><span class="tag tag">Faible</span></td></tr>
+</table>
+
+<h2>11.3 Environnement de Developpement</h2>
+<pre>
+# Backend
+cd innovhub-backend
+mvn spring-boot:run
+
+# Frontend
+cd innov-hub-next
+npm install
+npm run dev
+
+# Base de donnees
+mysql -u root -p
+CREATE DATABASE innovhub;
+</pre>
+
+<hr class="separator">
+<div class="page-break"></div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- 12. GLOSSAIRE -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<h1 id="s12">12. Glossaire</h1>
+
+<table>
+  <tr><th>Terme</th><th>Definition</th></tr>
+  <tr><td><strong>JWT</strong></td><td>JSON Web Token - standard de token d'authentification securise</td></tr>
+  <tr><td><strong>STOMP</strong></td><td>Simple Text Oriented Messaging Protocol - protocole de messagerie WebSocket</td></tr>
+  <tr><td><strong>SPA</strong></td><td>Single Page Application - application web monopage</td></tr>
+  <tr><td><strong>CRUD</strong></td><td>Create, Read, Update, Delete - operations de base sur les donnees</td></tr>
+  <tr><td><strong>KPI</strong></td><td>Key Performance Indicator - indicateur cle de performance</td></tr>
+  <tr><td><strong>ROI</strong></td><td>Return On Investment - retour sur investissement</td></tr>
+  <tr><td><strong>BU</strong></td><td>Business Unit - unite commerciale/division</td></tr>
+  <tr><td><strong>Kanban</strong></td><td>Methode de gestion visuelle du flux de travail</td></tr>
+  <tr><td><strong>Workflow</strong></td><td>Enchainement structure d'etapes dans un processus</td></tr>
+  <tr><td><strong>Porteur d'idee</strong></td><td>Collaborateur qui soumet des idees innovantes</td></tr>
+  <tr><td><strong>Resp. Innovation</strong></td><td>Responsable de la gestion et validation des idees</td></tr>
+  <tr><td><strong>Incubation</strong></td><td>Phase de transformation d'une idee approuvee en projet pilote</td></tr>
+  <tr><td><strong>Livrable</strong></td><td>Resultat tangible attendu a une etape du projet</td></tr>
+  <tr><td><strong>Scoring</strong></td><td>Evaluation multicritere d'une idee par les decideurs</td></tr>
+  <tr><td><strong>Pipeline</strong></td><td>Representation du flux d'idees a travers les etapes du workflow</td></tr>
+</table>
+
+<hr class="separator">
+
+<div style="text-align:center; margin-top: 60px; color: #999; font-size: 10pt;">
+  <p><strong>Innov'Hub</strong> - Plateforme de Gestion de l'Innovation d'Entreprise</p>
+  <p>Cahier de Charge v1.0 - 14 Avril 2026</p>
+  <p>Document confidentiel - Tous droits reserves</p>
+</div>
+
+</body>
+</html>

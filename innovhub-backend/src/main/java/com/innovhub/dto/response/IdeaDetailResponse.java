@@ -10,7 +10,6 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
-import java.util.UUID;
 
 @Data
 @Builder
@@ -25,12 +24,16 @@ public class IdeaDetailResponse {
     private String category;
     private IdeaStatus status;
     private BigDecimal totalScore;
+    private int scoreCount;
+    private int requiredScoreCount;
     private String submittedByName;
     private String submittedById;
     private long voteCount;
     private long commentCount;
     private Instant submittedAt;
     private Instant createdAt;
+
+    private String imageUrl;
 
     // Additional detail fields
     private String problemStatement;
@@ -47,5 +50,7 @@ public class IdeaDetailResponse {
     private UserSummaryResponse submittedBy;
     private UserSummaryResponse assignedTo;
     private List<IdeaScoreResponse> scores;
+    private List<String> scoredByRoles;
+    private Instant scoringDeadline;
     private Instant updatedAt;
 }

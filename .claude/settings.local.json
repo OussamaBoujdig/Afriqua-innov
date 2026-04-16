@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(netstat -ano)",
+      "Read(//c/xampp/mysql//**)",
+      "Read(//c/xampp//**)"
+    ]
+  }
+}

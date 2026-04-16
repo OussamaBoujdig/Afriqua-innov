@@ -22,9 +22,11 @@ public class ProjectDetailResponse {
     private String description;
     private ProjectStage currentStage;
     private Integer stageProgress;
+    private String status;
     private UserSummaryResponse owner;
     private LocalDate dueDate;
     private Instant launchedAt;
+    private Instant closedAt;
     private String ideaId;
     private String ideaTitle;
     private List<ProjectDeliverableResponse> deliverables;

@@ -40,7 +40,7 @@ public class IdeaScore {
     @Column(name = "risk_level", nullable = false)
     private Integer riskLevel;
 
-    @Column(name = "total_score", precision = 4, scale = 2, insertable = false, updatable = false)
+    @Column(name = "total_score", precision = 4, scale = 2)
     private BigDecimal totalScore;
 
     @Column(columnDefinition = "text")

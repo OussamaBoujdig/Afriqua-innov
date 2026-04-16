@@ -36,93 +36,82 @@ export default function ProfilPage() {
   const initials = `${user.firstName?.[0] || ""}${user.lastName?.[0] || ""}`.toUpperCase();
 
   return (
-    <div className="p-4 lg:p-6">
-      <div className="max-w-4xl mx-auto space-y-4">
-        {/* Profile Header Card */}
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm overflow-hidden">
-          <div className="h-24 bg-gradient-to-r from-primary to-indigo-600 relative">
-            <div className="absolute -bottom-8 left-6">
-              <div className="size-16 rounded-2xl bg-white dark:bg-slate-800 border-4 border-white dark:border-slate-800 shadow-lg flex items-center justify-center text-primary text-xl font-extrabold">
+    <div className="px-4 md:px-6 py-5">
+      <div className="max-w-5xl mx-auto space-y-5">
+        {/* Profile Header */}
+        <div className="card p-5">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="size-12 rounded-md bg-[#0066B3] flex items-center justify-center text-white text-[15px] font-semibold shrink-0">
                 {initials}
               </div>
-            </div>
-          </div>
-          <div className="pt-10 pb-4 px-6">
-            <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
               <div>
-                <h1 className="text-lg font-extrabold tracking-tight">{user.fullName || `${user.firstName} ${user.lastName}`}</h1>
-                <p className="text-sm text-slate-500">{user.email}</p>
-                <div className="flex items-center gap-2 mt-2">
-                  <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase">
+                <h1 className="text-lg font-semibold text-neutral-900 dark:text-white">
+                  {user.fullName || `${user.firstName} ${user.lastName}`}
+                </h1>
+                <p className="text-[13px] text-neutral-500">{user.email}</p>
+                <div className="flex items-center gap-1.5 mt-1.5">
+                  <span className="badge bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300">
                     {roleLabels[user.role] || user.role}
                   </span>
                   {user.department && (
-                    <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-[10px] font-medium">
+                    <span className="badge bg-neutral-50 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400">
                       {user.department}
                     </span>
                   )}
                   {user.businessUnit && (
-                    <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-[10px] font-medium">
+                    <span className="badge bg-neutral-50 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400">
                       {user.businessUnit}
                     </span>
                   )}
                 </div>
               </div>
-              <button
-                onClick={logout}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-xs font-semibold hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
-              >
-                <span className="material-symbols-outlined text-sm">logout</span>
-                Déconnexion
-              </button>
             </div>
+            <button
+              onClick={logout}
+              className="btn-danger self-start"
+            >
+              <span className="material-symbols-outlined text-[15px]">logout</span>
+              Déconnexion
+            </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Stats */}
-          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm p-4 text-center">
-            <span className="material-symbols-outlined text-primary text-2xl mb-1">lightbulb</span>
-            <p className="text-2xl font-extrabold text-primary">{myIdeas.length}</p>
-            <p className="text-[10px] font-bold text-slate-400 uppercase">Idées soumises</p>
+        {/* Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="card p-4">
+            <p className="text-[11px] font-medium text-neutral-400 uppercase tracking-wide">Idées soumises</p>
+            <p className="text-2xl font-semibold text-neutral-900 dark:text-white mt-1">{myIdeas.length}</p>
           </div>
-          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm p-4 text-center">
-            <span className="material-symbols-outlined text-amber-500 text-2xl mb-1">emoji_events</span>
-            <p className="text-2xl font-extrabold text-amber-500">{user.points || 0}</p>
-            <p className="text-[10px] font-bold text-slate-400 uppercase">Points gagnés</p>
+          <div className="card p-4">
+            <p className="text-[11px] font-medium text-neutral-400 uppercase tracking-wide">Points gagnés</p>
+            <p className="text-2xl font-semibold text-neutral-900 dark:text-white mt-1">{user.points || 0}</p>
           </div>
-          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm p-4 text-center">
-            <span className="material-symbols-outlined text-emerald-500 text-2xl mb-1">favorite</span>
-            <p className="text-2xl font-extrabold text-emerald-500">
+          <div className="card p-4">
+            <p className="text-[11px] font-medium text-neutral-400 uppercase tracking-wide">Votes reçus</p>
+            <p className="text-2xl font-semibold text-neutral-900 dark:text-white mt-1">
               {myIdeas.reduce((sum, i) => sum + (i.voteCount || 0), 0)}
             </p>
-            <p className="text-[10px] font-bold text-slate-400 uppercase">Votes reçus</p>
           </div>
         </div>
 
         {/* Recent Ideas */}
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 shadow-sm p-4">
-          <h2 className="text-sm font-bold mb-3 flex items-center gap-2">
-            <span className="material-symbols-outlined text-primary text-base">history</span>
-            Mes dernières idées
-          </h2>
+        <div className="card p-4">
+          <h2 className="text-[14px] font-medium text-neutral-900 dark:text-white mb-3">Mes dernières idées</h2>
           {myIdeas.length === 0 ? (
-            <p className="text-xs text-slate-400 text-center py-4">Aucune idée soumise pour le moment.</p>
+            <p className="text-[13px] text-neutral-400 text-center py-6">Aucune idée soumise pour le moment.</p>
           ) : (
-            <div className="space-y-2">
+            <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
               {myIdeas.map((idea) => (
-                <div key={idea.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50/80 dark:bg-slate-800/50 hover:bg-primary/5 transition-colors">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <span className="material-symbols-outlined text-primary text-base shrink-0">lightbulb</span>
-                    <div className="min-w-0">
-                      <p className="text-xs font-semibold truncate">{idea.title}</p>
-                      <p className="text-[10px] text-slate-400">{idea.category}</p>
-                    </div>
+                <div key={idea.id} className="flex items-center justify-between py-2.5 first:pt-0 last:pb-0">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[13px] font-medium text-neutral-900 dark:text-white truncate">{idea.title}</p>
+                    <p className="text-[12px] text-neutral-400">{idea.category}</p>
                   </div>
-                  <div className="flex items-center gap-3 shrink-0">
+                  <div className="flex items-center gap-3 shrink-0 ml-3">
                     <StatusBadge status={idea.status} />
-                    <span className="flex items-center gap-0.5 text-[10px] text-slate-400">
-                      <span className="material-symbols-outlined text-xs">favorite</span>
+                    <span className="flex items-center gap-1 text-[12px] text-neutral-400">
+                      <span className="material-symbols-outlined text-[13px]">thumb_up</span>
                       {idea.voteCount}
                     </span>
                   </div>
@@ -138,15 +127,15 @@ export default function ProfilPage() {
 
 function StatusBadge({ status }: { status: string }) {
   const colors: Record<string, string> = {
-    BROUILLON: "bg-slate-100 text-slate-600",
-    SOUMISE: "bg-blue-100 text-blue-700",
-    EN_VALIDATION: "bg-amber-100 text-amber-700",
-    SCOREE: "bg-purple-100 text-purple-700",
-    APPROUVEE_INNOVATION: "bg-teal-100 text-teal-700",
-    APPROUVEE_BU: "bg-emerald-100 text-emerald-700",
-    APPROUVEE_DG: "bg-emerald-100 text-emerald-700",
-    CLOTUREE: "bg-slate-100 text-slate-600",
-    REJETEE: "bg-red-100 text-red-700",
+    BROUILLON: "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400",
+    SOUMISE: "bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400",
+    EN_VALIDATION: "bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400",
+    SCOREE: "bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400",
+    APPROUVEE_INNOVATION: "bg-teal-50 text-teal-700 dark:bg-teal-900/20 dark:text-teal-400",
+    APPROUVEE_BU: "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400",
+    APPROUVEE_DG: "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400",
+    CLOTUREE: "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400",
+    REJETEE: "bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400",
   };
   const labels: Record<string, string> = {
     BROUILLON: "Brouillon",
@@ -160,7 +149,7 @@ function StatusBadge({ status }: { status: string }) {
     REJETEE: "Rejetée",
   };
   return (
-    <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${colors[status] || "bg-slate-100 text-slate-600"}`}>
+    <span className={`badge ${colors[status] || "bg-neutral-100 text-neutral-600"}`}>
       {labels[status] || status}
     </span>
   );

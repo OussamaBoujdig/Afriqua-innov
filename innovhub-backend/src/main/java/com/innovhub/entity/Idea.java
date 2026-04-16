@@ -20,7 +20,7 @@ public class Idea {
     @Column(length = 36)
     private String id;
 
-    @Column(length = 20, unique = true, insertable = false, updatable = false)
+    @Column(length = 20, unique = true)
     private String reference;
 
     @Column(nullable = false)
@@ -77,6 +77,12 @@ public class Idea {
     @JoinColumn(name = "assigned_to")
     private User assignedTo;
 
+    @Column(name = "image_url")
+    private String imageUrl;
+
+    @Column(name = "scoring_deadline")
+    private Instant scoringDeadline;
+
     @Column(name = "submitted_at")
     private Instant submittedAt;
 
@@ -89,9 +95,13 @@ public class Idea {
     private Instant updatedAt;
 
     @PrePersist
-    public void generateId() {
+    public void generateIdAndReference() {
         if (this.id == null) {
             this.id = java.util.UUID.randomUUID().toString();
+        }
+        if (this.reference == null) {
+            this.reference = "ID-" + java.time.Year.now().getValue() + "-"
+                    + this.id.substring(0, 6).toUpperCase();
         }
     }
 }

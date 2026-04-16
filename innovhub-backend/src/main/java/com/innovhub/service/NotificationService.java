@@ -12,14 +12,13 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.UUID;
-
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
+    private final WebSocketBroadcastService broadcastService;
 
     @Async
     @Transactional
@@ -32,7 +31,8 @@ public class NotificationService {
                 .link(null)
                 .isRead(false)
                 .build();
-        notificationRepository.save(notification);
+        notification = notificationRepository.save(notification);
+        broadcastService.sendNotificationToUser(user.getId(), toResponse(notification));
     }
 
     @Async
@@ -46,7 +46,8 @@ public class NotificationService {
                 .link(link)
                 .isRead(false)
                 .build();
-        notificationRepository.save(notification);
+        notification = notificationRepository.save(notification);
+        broadcastService.sendNotificationToUser(user.getId(), toResponse(notification));
     }
 
     public Page<NotificationResponse> getNotifications(String userId, Pageable pageable) {
@@ -64,9 +65,17 @@ public class NotificationService {
     }
 
     @Transactional
-    public void markAsRead(String notificationId) {
+    public void clearAll(String userId) {
+        notificationRepository.deleteAllByUserId(userId);
+    }
+
+    @Transactional
+    public void markAsRead(String notificationId, String userId) {
         Notification notification = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Notification non trouvée"));
+        if (!notification.getUser().getId().equals(userId)) {
+            throw new com.innovhub.exception.ForbiddenException("Vous ne pouvez modifier que vos propres notifications");
+        }
         notification.setIsRead(true);
         notificationRepository.save(notification);
     }

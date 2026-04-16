@@ -4,52 +4,51 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 
-const mobileNavItems = [
-  { href: "/", icon: "dashboard", roles: null },
-  { href: "/mes-idees", icon: "lightbulb", roles: null },
-  { href: "/soumettre", icon: "add", isFab: true, roles: ["PORTEUR_IDEE"] },
-  { href: "/campagnes", icon: "explore", roles: null },
-  { href: "/approbation", icon: "approval_delegation", roles: ["RESPONSABLE_INNOVATION", "DIRECTEUR_BU", "DIRECTEUR_GENERAL"] },
+const MANAGERS = ["RESPONSABLE_INNOVATION", "DIRECTEUR_BU", "DIRECTEUR_GENERAL"];
+
+type NavItem = { href: string; icon: string; label: string };
+
+const employeeItems: NavItem[] = [
+  { href: "/", icon: "space_dashboard", label: "Accueil" },
+  { href: "/mes-idees", icon: "lightbulb", label: "Idées" },
+  { href: "/soumettre", icon: "add_circle", label: "Soumettre" },
+  { href: "/campagnes", icon: "campaign", label: "Campagnes" },
+  { href: "/mes-taches", icon: "task_alt", label: "Tâches" },
+];
+
+const managerItems: NavItem[] = [
+  { href: "/", icon: "space_dashboard", label: "Accueil" },
+  { href: "/toutes-idees", icon: "list", label: "Idées" },
+  { href: "/approbation", icon: "fact_check", label: "Approb." },
+  { href: "/suivi-projet", icon: "monitoring", label: "Projets" },
+  { href: "/messagerie", icon: "chat_bubble", label: "Messages" },
 ];
 
 export default function MobileBottomNav() {
   const pathname = usePathname();
   const { user } = useAuth();
 
-  const isActive = (href: string) => {
-    if (href === "/") return pathname === "/";
-    return pathname.startsWith(href);
-  };
+  const isActive = (href: string) =>
+    href === "/" ? pathname === "/" : pathname.startsWith(href);
 
-  const visibleItems = mobileNavItems.filter(
-    (item) => !item.roles || (user && item.roles.includes(user.role))
-  );
+  const items = user && MANAGERS.includes(user.role) ? managerItems : employeeItems;
 
   return (
-    <nav className="lg:hidden flex justify-around items-center h-14 bg-white dark:bg-slate-900 border-t border-slate-200/60 dark:border-slate-800/60 shrink-0 z-50">
-      {visibleItems.map((item) =>
-        item.isFab ? (
-          <Link
-            key={item.href}
-            href={item.href}
-            className="size-10 rounded-full bg-primary text-white -mt-5 shadow-md shadow-primary/30 flex items-center justify-center"
-          >
-            <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
-          </Link>
-        ) : (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={`flex flex-col items-center transition-colors ${
-              isActive(item.href) ? "text-primary" : "text-slate-400 hover:text-primary"
-            }`}
-          >
-            <span className={`material-symbols-outlined text-[20px] ${isActive(item.href) ? "active-fill" : ""}`}>
-              {item.icon}
-            </span>
-          </Link>
-        )
-      )}
+    <nav className="lg:hidden flex justify-around items-end h-14 bg-white dark:bg-[#111113] border-t border-neutral-200 dark:border-neutral-800 shrink-0 z-50 px-1 pb-1">
+      {items.map((item) => (
+        <Link
+          key={item.href}
+          href={item.href}
+          className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-md min-w-0 ${
+            isActive(item.href)
+              ? "text-[#0066B3] dark:text-blue-400"
+              : "text-slate-400 dark:text-neutral-500"
+          }`}
+        >
+          <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
+          <span className="text-[10px] font-medium leading-none truncate">{item.label}</span>
+        </Link>
+      ))}
     </nav>
   );
 }

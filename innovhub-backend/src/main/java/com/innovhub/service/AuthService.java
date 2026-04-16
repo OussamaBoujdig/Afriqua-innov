@@ -1,12 +1,13 @@
 package com.innovhub.service;
 
+import com.innovhub.dto.request.CreateUserRequest;
 import com.innovhub.dto.request.LoginRequest;
 import com.innovhub.dto.request.RefreshTokenRequest;
-import com.innovhub.dto.request.RegisterRequest;
 import com.innovhub.dto.response.AuthResponse;
 import com.innovhub.dto.response.UserSummaryResponse;
 import com.innovhub.entity.RefreshToken;
 import com.innovhub.entity.User;
+import com.innovhub.enums.UserRole;
 import com.innovhub.exception.BadRequestException;
 import com.innovhub.exception.ResourceNotFoundException;
 import com.innovhub.repository.RefreshTokenRepository;
@@ -18,7 +19,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -30,7 +30,7 @@ public class AuthService {
     private final JwtUtil jwtUtil;
 
     @Transactional
-    public AuthResponse register(RegisterRequest request) {
+    public User createUser(CreateUserRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new BadRequestException("Email déjà utilisé");
         }
@@ -45,29 +45,34 @@ public class AuthService {
                 .department(request.getDepartment())
                 .build();
 
-        user = userRepository.save(user);
+        return userRepository.save(user);
+    }
 
-        String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getEmail(), user.getRole().name());
-        String refreshTokenValue = jwtUtil.generateRefreshToken();
+    @Transactional
+    public User updateUserRole(String userId, UserRole role) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur non trouvé"));
+        user.setRole(role);
+        return userRepository.save(user);
+    }
 
-        RefreshToken refreshToken = RefreshToken.builder()
-                .token(refreshTokenValue)
-                .user(user)
-                .expiresAt(Instant.now().plusMillis(jwtUtil.getRefreshExpiration()))
-                .build();
-        refreshTokenRepository.save(refreshToken);
-
-        return AuthResponse.builder()
-                .accessToken(accessToken)
-                .refreshToken(refreshTokenValue)
-                .user(toUserSummary(user))
-                .build();
+    @Transactional
+    public void deleteUser(String userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur non trouvé"));
+        user.setIsActive(false);
+        userRepository.save(user);
+        refreshTokenRepository.deleteByUser_Id(userId);
     }
 
     @Transactional
     public AuthResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new ResourceNotFoundException("Utilisateur non trouvé"));
+
+        if (!user.getIsActive()) {
+            throw new BadRequestException("Ce compte a été désactivé");
+        }
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
             throw new BadRequestException("Mot de passe incorrect");
@@ -76,7 +81,7 @@ public class AuthService {
         user.setLastLoginAt(Instant.now());
         userRepository.save(user);
 
-        String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getEmail(), user.getRole().name());
+        String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getEmail(), user.getRole().name(), user.getFirstName(), user.getLastName());
         String refreshTokenValue = jwtUtil.generateRefreshToken();
 
         RefreshToken refreshToken = RefreshToken.builder()
@@ -107,7 +112,7 @@ public class AuthService {
 
         refreshTokenRepository.delete(refreshTokenEntity);
 
-        String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getEmail(), user.getRole().name());
+        String accessToken = jwtUtil.generateAccessToken(user.getId(), user.getEmail(), user.getRole().name(), user.getFirstName(), user.getLastName());
         String refreshTokenValue = jwtUtil.generateRefreshToken();
 
         RefreshToken newRefreshToken = RefreshToken.builder()

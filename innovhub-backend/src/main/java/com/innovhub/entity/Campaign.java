@@ -27,14 +27,14 @@ public class Campaign {
     @Column(nullable = false, length = 100)
     private String category;
 
-    @Column(name = "category_color", length = 7)
+    @Column(name = "category_color", length = 50)
     @Builder.Default
     private String categoryColor = "#7C3AED";
 
-    @Column(name = "image_url", length = 500)
+    @Column(name = "image_url", columnDefinition = "mediumtext")
     private String imageUrl;
 
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false, columnDefinition = "varchar(20)")
     @Builder.Default
     private String status = "ACTIF";
 

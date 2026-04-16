@@ -1,0 +1,1261 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InnovHub — Rapport Technique Complet</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+  :root {
+    --primary: #6C3AED;
+    --primary-light: #EDE9FE;
+    --accent: #0EA5E9;
+    --dark: #0F172A;
+    --gray: #64748B;
+    --light: #F8FAFC;
+    --border: #E2E8F0;
+    --success: #10B981;
+    --warning: #F59E0B;
+    --danger: #EF4444;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    color: var(--dark);
+    line-height: 1.7;
+    background: #fff;
+    font-size: 11pt;
+  }
+
+  @media print {
+    body { font-size: 10pt; }
+    .page-break { page-break-before: always; }
+    .no-break { page-break-inside: avoid; }
+    .cover-page { height: 100vh; }
+    @page { margin: 1.5cm 2cm; size: A4; }
+    .mermaid svg { max-width: 100% !important; }
+  }
+
+  /* Cover page */
+  .cover-page {
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    min-height: 100vh; background: linear-gradient(135deg, var(--primary) 0%, #4338CA 50%, #1E1B4B 100%);
+    color: #fff; text-align: center; padding: 3rem;
+  }
+  .cover-page .logo { font-size: 5rem; font-weight: 900; letter-spacing: -3px; margin-bottom: 0.5rem; }
+  .cover-page .logo span { color: #A78BFA; }
+  .cover-page .subtitle { font-size: 1.4rem; font-weight: 300; opacity: 0.9; margin-bottom: 3rem; }
+  .cover-page .doc-title {
+    font-size: 2rem; font-weight: 700; background: rgba(255,255,255,0.15);
+    padding: 1.5rem 3rem; border-radius: 16px; margin-bottom: 3rem;
+    border: 1px solid rgba(255,255,255,0.2);
+  }
+  .cover-page .meta { font-size: 0.95rem; opacity: 0.7; line-height: 2; }
+
+  /* Content */
+  .content { max-width: 900px; margin: 0 auto; padding: 2rem; }
+
+  /* TOC */
+  .toc { padding: 2rem 3rem; }
+  .toc h2 { font-size: 1.8rem; color: var(--primary); margin-bottom: 1.5rem; }
+  .toc-list { list-style: none; }
+  .toc-list li { padding: 0.5rem 0; border-bottom: 1px dashed var(--border); display: flex; justify-content: space-between; }
+  .toc-list li a { color: var(--dark); text-decoration: none; font-weight: 500; }
+  .toc-list li span { color: var(--gray); }
+  .toc-list li.main { font-weight: 700; font-size: 1.05rem; padding-top: 1rem; }
+
+  /* Headings */
+  h1 { font-size: 2rem; color: var(--primary); margin: 2.5rem 0 1rem; padding-bottom: 0.5rem; border-bottom: 3px solid var(--primary); }
+  h2 { font-size: 1.5rem; color: var(--dark); margin: 2rem 0 0.8rem; padding-bottom: 0.3rem; border-bottom: 2px solid var(--border); }
+  h3 { font-size: 1.15rem; color: var(--primary); margin: 1.5rem 0 0.5rem; }
+  h4 { font-size: 1rem; color: var(--gray); margin: 1rem 0 0.3rem; font-weight: 600; }
+
+  p { margin-bottom: 0.8rem; color: #334155; }
+  ul, ol { margin: 0.5rem 0 1rem 1.5rem; }
+  li { margin-bottom: 0.3rem; }
+
+  /* Info boxes */
+  .info-box {
+    background: var(--primary-light); border-left: 4px solid var(--primary);
+    padding: 1rem 1.5rem; border-radius: 0 8px 8px 0; margin: 1rem 0;
+  }
+  .info-box.green { background: #ECFDF5; border-color: var(--success); }
+  .info-box.orange { background: #FFFBEB; border-color: var(--warning); }
+  .info-box.red { background: #FEF2F2; border-color: var(--danger); }
+  .info-box.blue { background: #EFF6FF; border-color: var(--accent); }
+  .info-box strong { color: var(--dark); }
+
+  /* Tables */
+  table {
+    width: 100%; border-collapse: collapse; margin: 1rem 0 1.5rem;
+    font-size: 0.9em;
+  }
+  th { background: var(--dark); color: #fff; padding: 0.6rem 0.8rem; text-align: left; font-weight: 600; }
+  td { padding: 0.5rem 0.8rem; border-bottom: 1px solid var(--border); }
+  tr:nth-child(even) { background: var(--light); }
+
+  /* Diagrams */
+  .diagram-container {
+    background: var(--light); border: 1px solid var(--border);
+    border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0;
+    overflow-x: auto;
+  }
+  .diagram-title {
+    text-align: center; font-weight: 700; color: var(--primary);
+    margin-bottom: 1rem; font-size: 1.1rem;
+  }
+  .mermaid { display: flex; justify-content: center; }
+
+  /* Code blocks */
+  code { background: #F1F5F9; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; color: var(--primary); }
+  pre { background: #1E293B; color: #E2E8F0; padding: 1rem; border-radius: 8px; overflow-x: auto; margin: 1rem 0; font-size: 0.85em; line-height: 1.5; }
+
+  /* Tags */
+  .tag { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 0.8em; font-weight: 600; margin: 2px; }
+  .tag-purple { background: #EDE9FE; color: #6C3AED; }
+  .tag-blue { background: #DBEAFE; color: #2563EB; }
+  .tag-green { background: #D1FAE5; color: #059669; }
+  .tag-red { background: #FEE2E2; color: #DC2626; }
+  .tag-amber { background: #FEF3C7; color: #D97706; }
+  .tag-slate { background: #E2E8F0; color: #475569; }
+
+  /* Workflow arrow */
+  .workflow-step {
+    display: inline-flex; align-items: center; margin: 0.2rem 0;
+  }
+  .workflow-step .arrow { margin: 0 0.5rem; color: var(--gray); }
+
+  /* Section numbering */
+  .section-num {
+    display: inline-block; background: var(--primary); color: #fff;
+    width: 2rem; height: 2rem; text-align: center; line-height: 2rem;
+    border-radius: 50%; font-weight: 700; font-size: 0.9rem; margin-right: 0.5rem;
+  }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+  @media print { .two-col { grid-template-columns: 1fr 1fr; } }
+</style>
+</head>
+<body>
+
+<!-- ==================== COVER PAGE ==================== -->
+<div class="cover-page">
+  <div class="logo">Innov<span>Hub</span></div>
+  <div class="subtitle">Plateforme de Gestion du Cycle de Vie de l'Innovation</div>
+  <div class="doc-title">Rapport Technique Complet<br><small style="font-weight:300;font-size:0.7em">Contexte &bull; Probl&eacute;matique &bull; Solutions &bull; Mod&eacute;lisation UML &bull; BPMN</small></div>
+  <div class="meta">
+    Version 1.0 &mdash; Mars 2026<br>
+    Architecture Full-Stack : Spring Boot &amp; Next.js<br>
+    Confidentiel &mdash; Usage interne
+  </div>
+</div>
+
+<!-- ==================== TOC ==================== -->
+<div class="page-break"></div>
+<div class="content toc">
+  <h2>Table des Mati&egrave;res</h2>
+  <ol class="toc-list">
+    <li class="main"><a href="#ctx">1. Contexte du Projet</a></li>
+    <li><a href="#ctx-obj">&nbsp;&nbsp;1.1 Objectifs</a></li>
+    <li><a href="#ctx-stack">&nbsp;&nbsp;1.2 Stack Technique</a></li>
+    <li><a href="#ctx-roles">&nbsp;&nbsp;1.3 Acteurs &amp; R&ocirc;les</a></li>
+    <li class="main"><a href="#prob">2. Probl&eacute;matique</a></li>
+    <li class="main"><a href="#sol">3. Solutions Propos&eacute;es</a></li>
+    <li class="main"><a href="#uc">4. Diagramme de Cas d'Utilisation</a></li>
+    <li class="main"><a href="#class">5. Diagramme de Classes</a></li>
+    <li class="main"><a href="#seq">6. Diagrammes de S&eacute;quence</a></li>
+    <li><a href="#seq-auth">&nbsp;&nbsp;6.1 Authentification</a></li>
+    <li><a href="#seq-idea">&nbsp;&nbsp;6.2 Soumission d'Id&eacute;e</a></li>
+    <li><a href="#seq-score">&nbsp;&nbsp;6.3 &Eacute;valuation (Scoring)</a></li>
+    <li><a href="#seq-approve">&nbsp;&nbsp;6.4 Approbation Multi-Niveaux</a></li>
+    <li><a href="#seq-project">&nbsp;&nbsp;6.5 Cr&eacute;ation de Projet</a></li>
+    <li><a href="#seq-team">&nbsp;&nbsp;6.6 Gestion d'&Eacute;quipe</a></li>
+    <li class="main"><a href="#bpmn">7. Diagramme BPMN</a></li>
+    <li class="main"><a href="#workflow">8. Workflow Complet</a></li>
+    <li><a href="#wf-idea">&nbsp;&nbsp;8.1 Cycle de Vie d'une Id&eacute;e</a></li>
+    <li><a href="#wf-project">&nbsp;&nbsp;8.2 Pipeline Projet</a></li>
+    <li><a href="#wf-invite">&nbsp;&nbsp;8.3 Invitations &amp; &Eacute;quipe</a></li>
+    <li class="main"><a href="#notif">9. Syst&egrave;me de Notifications</a></li>
+    <li class="main"><a href="#sec">10. S&eacute;curit&eacute; &amp; Permissions</a></li>
+  </ol>
+</div>
+
+<!-- ==================== 1. CONTEXTE ==================== -->
+<div class="page-break"></div>
+<div class="content">
+
+<h1 id="ctx"><span class="section-num">1</span> Contexte du Projet</h1>
+
+<p><strong>InnovHub</strong> est une plateforme de gestion du cycle de vie de l'innovation d'entreprise. Elle permet de <strong>collecter, &eacute;valuer, approuver et transformer</strong> les id&eacute;es des collaborateurs en projets concrets, &agrave; travers un workflow structur&eacute; multi-niveaux avec collaboration d'&eacute;quipe en temps r&eacute;el.</p>
+
+<div class="info-box">
+  <strong>Domaine :</strong> Innovation Management / Gestion de l'Innovation<br>
+  <strong>Type :</strong> Application web full-stack (SPA + REST API)<br>
+  <strong>Utilisateurs cibles :</strong> Collaborateurs, Managers Innovation, Directeurs BU, Direction G&eacute;n&eacute;rale
+</div>
+
+<h2 id="ctx-obj">1.1 Objectifs</h2>
+<ul>
+  <li><strong>Centraliser</strong> la collecte d'id&eacute;es innovantes au sein de l'organisation</li>
+  <li><strong>Structurer</strong> l'&eacute;valuation via un scoring multi-crit&egrave;res pond&eacute;r&eacute;</li>
+  <li><strong>S&eacute;curiser</strong> le processus d'approbation &agrave; 3 niveaux hi&eacute;rarchiques</li>
+  <li><strong>Transformer</strong> les id&eacute;es approuv&eacute;es en projets avec un pipeline en 4 &eacute;tapes</li>
+  <li><strong>Faciliter</strong> la collaboration via gestion d'&eacute;quipe, t&acirc;ches et messagerie en temps r&eacute;el</li>
+  <li><strong>Motiver</strong> les collaborateurs via un syst&egrave;me de gamification (points, classements)</li>
+  <li><strong>Organiser</strong> des campagnes d'innovation th&eacute;matiques</li>
+</ul>
+
+<h2 id="ctx-stack">1.2 Stack Technique</h2>
+<div class="two-col">
+  <div>
+    <h4>Backend</h4>
+    <table>
+      <tr><td>Framework</td><td><strong>Spring Boot 3.2.3</strong></td></tr>
+      <tr><td>Langage</td><td>Java 21</td></tr>
+      <tr><td>Base de donn&eacute;es</td><td>MySQL 8.x (Hibernate/JPA)</td></tr>
+      <tr><td>S&eacute;curit&eacute;</td><td>Spring Security + JWT</td></tr>
+      <tr><td>Temps r&eacute;el</td><td>WebSocket (STOMP/SockJS)</td></tr>
+      <tr><td>API Docs</td><td>SpringDoc OpenAPI (Swagger)</td></tr>
+      <tr><td>Build</td><td>Maven</td></tr>
+      <tr><td>Port</td><td>8081 (context-path: /api/v1)</td></tr>
+    </table>
+  </div>
+  <div>
+    <h4>Frontend</h4>
+    <table>
+      <tr><td>Framework</td><td><strong>Next.js 15.2</strong></td></tr>
+      <tr><td>Langage</td><td>TypeScript 5.9</td></tr>
+      <tr><td>UI Library</td><td>React 19</td></tr>
+      <tr><td>Styling</td><td>Tailwind CSS 4.0</td></tr>
+      <tr><td>Temps r&eacute;el</td><td>@stomp/stompjs + sockjs-client</td></tr>
+      <tr><td>Auth</td><td>JWT (localStorage)</td></tr>
+      <tr><td>Build</td><td>Turbopack</td></tr>
+      <tr><td>Port</td><td>3000</td></tr>
+    </table>
+  </div>
+</div>
+
+<h2 id="ctx-roles">1.3 Acteurs &amp; R&ocirc;les</h2>
+<table>
+  <tr><th>R&ocirc;le</th><th>Description</th><th>Permissions cl&eacute;s</th></tr>
+  <tr>
+    <td><span class="tag tag-blue">PORTEUR_IDEE</span></td>
+    <td>Collaborateur / Innovateur</td>
+    <td>Soumettre des id&eacute;es, voter, commenter, rejoindre des &eacute;quipes</td>
+  </tr>
+  <tr>
+    <td><span class="tag tag-purple">RESPONSABLE_INNOVATION</span></td>
+    <td>Manager Innovation</td>
+    <td>Scorer, valider (1er niveau), g&eacute;rer projets/&eacute;quipes/t&acirc;ches, cr&eacute;er utilisateurs &amp; campagnes</td>
+  </tr>
+  <tr>
+    <td><span class="tag tag-amber">DIRECTEUR_BU</span></td>
+    <td>Directeur Business Unit</td>
+    <td>Scorer, approuver (2e niveau), cr&eacute;er campagnes</td>
+  </tr>
+  <tr>
+    <td><span class="tag tag-red">DIRECTEUR_GENERAL</span></td>
+    <td>Direction G&eacute;n&eacute;rale</td>
+    <td>Scorer, approuver (3e niveau), cl&ocirc;turer id&eacute;es, cr&eacute;er projets, supprimer</td>
+  </tr>
+</table>
+
+<!-- ==================== 2. PROBLEMATIQUE ==================== -->
+<div class="page-break"></div>
+<h1 id="prob"><span class="section-num">2</span> Probl&eacute;matique</h1>
+
+<p>Les organisations font face &agrave; plusieurs d&eacute;fis majeurs dans la gestion de leur processus d'innovation :</p>
+
+<div class="info-box red">
+  <strong>Probl&egrave;me 1 : Perte d'id&eacute;es innovantes</strong><br>
+  Les id&eacute;es des collaborateurs sont soumises par email, r&eacute;unions ou documents isol&eacute;s. Il n'existe aucun r&eacute;f&eacute;rentiel centralis&eacute;, ce qui entra&icirc;ne la perte de nombreuses propositions &agrave; fort potentiel.
+</div>
+
+<div class="info-box red">
+  <strong>Probl&egrave;me 2 : Absence de processus d'&eacute;valuation structur&eacute;</strong><br>
+  Les id&eacute;es sont &eacute;valu&eacute;es de mani&egrave;re subjective, sans crit&egrave;res standardis&eacute;s ni pond&eacute;ration. Les d&eacute;cisions manquent de transparence et de tra&ccedil;abilit&eacute;.
+</div>
+
+<div class="info-box red">
+  <strong>Probl&egrave;me 3 : Circuit de validation lent et opaque</strong><br>
+  L'approbation passe par de multiples niveaux hi&eacute;rarchiques (Innovation &rarr; BU &rarr; DG) sans visibilit&eacute; sur l'&eacute;tat d'avancement. Les goulots d'&eacute;tranglement ne sont pas identifi&eacute;s.
+</div>
+
+<div class="info-box red">
+  <strong>Probl&egrave;me 4 : Transition chaotique id&eacute;e &rarr; projet</strong><br>
+  M&ecirc;me lorsqu'une id&eacute;e est valid&eacute;e, il n'y a pas de m&eacute;canisme automatique pour la transformer en projet structur&eacute; avec livrables, &eacute;quipe et planification.
+</div>
+
+<div class="info-box red">
+  <strong>Probl&egrave;me 5 : Manque de collaboration et d'engagement</strong><br>
+  Les porteurs d'id&eacute;es ne re&ccedil;oivent pas de feedback. Il n'y a pas de syst&egrave;me de vote, commentaire ou gamification pour encourager la participation.
+</div>
+
+<div class="info-box red">
+  <strong>Probl&egrave;me 6 : Absence de suivi projet</strong><br>
+  Apr&egrave;s lancement, les projets ne b&eacute;n&eacute;ficient pas d'un outil de suivi int&eacute;gr&eacute; : pas de pipeline d'&eacute;tapes, pas de gestion de t&acirc;ches, pas de communication centralis&eacute;e.
+</div>
+
+<!-- ==================== 3. SOLUTIONS ==================== -->
+<div class="page-break"></div>
+<h1 id="sol"><span class="section-num">3</span> Solutions Propos&eacute;es</h1>
+
+<p>InnovHub r&eacute;pond &agrave; chaque probl&eacute;matique par une fonctionnalit&eacute; d&eacute;di&eacute;e :</p>
+
+<div class="info-box green">
+  <strong>Solution 1 : R&eacute;f&eacute;rentiel centralis&eacute; d'id&eacute;es</strong><br>
+  Un portail unique o&ugrave; chaque collaborateur peut soumettre ses id&eacute;es via un assistant en 3 &eacute;tapes (concept, impact/ROI, r&eacute;vision). Chaque id&eacute;e re&ccedil;oit une r&eacute;f&eacute;rence unique (<code>ID-YYYY-XXXXXX</code>). Possibilit&eacute; de sauvegarder en brouillon et de joindre des documents.
+</div>
+
+<div class="info-box green">
+  <strong>Solution 2 : Scoring multi-crit&egrave;res pond&eacute;r&eacute;</strong><br>
+  &Eacute;valuation structur&eacute;e sur 5 crit&egrave;res (Innovation 25%, Faisabilit&eacute; technique 20%, Alignement strat&eacute;gique 25%, Potentiel ROI 20%, Risque 10%). Chaque r&ocirc;le d&eacute;cisionnaire note ind&eacute;pendamment. Score moyen calcul&eacute; automatiquement.
+</div>
+
+<div class="info-box green">
+  <strong>Solution 3 : Workflow d'approbation &agrave; 3 niveaux</strong><br>
+  Pipeline d'approbation s&eacute;quentiel : <em>Responsable Innovation</em> &rarr; <em>Directeur BU</em> &rarr; <em>Directeur G&eacute;n&eacute;ral</em>. Historique complet des transitions. Notifications automatiques &agrave; chaque &eacute;tape. Possibilit&eacute; de rejet avec justification.
+</div>
+
+<div class="info-box green">
+  <strong>Solution 4 : Transformation automatique id&eacute;e &rarr; projet</strong><br>
+  &Agrave; la cl&ocirc;ture d'une id&eacute;e approuv&eacute;e DG, cr&eacute;ation automatique d'un projet avec : nom, description, responsable, 4 livrables par d&eacute;faut (phase Exploration), pipeline en 4 &eacute;tapes (Exploration &rarr; Conceptualisation &rarr; Pilote &rarr; Mise &agrave; l'&Eacute;chelle).
+</div>
+
+<div class="info-box green">
+  <strong>Solution 5 : Engagement &amp; Gamification</strong><br>
+  Syst&egrave;me de votes, commentaires imbriqu&eacute;s, +500 points pour une id&eacute;e transform&eacute;e en projet. Classement &laquo; Top Innovateurs &raquo; sur le dashboard. Campagnes d'innovation th&eacute;matiques.
+</div>
+
+<div class="info-box green">
+  <strong>Solution 6 : Suivi de projet int&eacute;gr&eacute;</strong><br>
+  Dashboard projet avec onglets (livrables, t&acirc;ches, &eacute;quipe, messagerie, documents). Gestion d'&eacute;quipe par invitations. T&acirc;ches assignables avec suivi de statut. Messagerie temps r&eacute;el via WebSocket. Notifications automatiques.
+</div>
+
+<!-- ==================== 4. USE CASE ==================== -->
+<div class="page-break"></div>
+<h1 id="uc"><span class="section-num">4</span> Diagramme de Cas d'Utilisation</h1>
+
+<div class="diagram-container no-break">
+  <div class="diagram-title">Diagramme de Cas d'Utilisation &mdash; InnovHub</div>
+  <div class="mermaid">
+graph LR
+  subgraph Acteurs
+    PI["&#128100; Porteur d'Id&eacute;e"]
+    RI["&#128101; Resp. Innovation"]
+    DBU["&#128188; Directeur BU"]
+    DG["&#127942; Directeur G&eacute;n&eacute;ral"]
+  end
+
+  subgraph UC_AUTH["Authentification"]
+    A1["Se connecter"]
+    A2["Se d&eacute;connecter"]
+    A3["Rafra&icirc;chir token"]
+  end
+
+  subgraph UC_IDEA["Gestion des Id&eacute;es"]
+    I1["Soumettre une id&eacute;e"]
+    I2["Sauvegarder brouillon"]
+    I3["Consulter mes id&eacute;es"]
+    I4["Modifier une id&eacute;e brouillon"]
+    I5["Joindre un document"]
+    I6["Voter pour une id&eacute;e"]
+    I7["Commenter une id&eacute;e"]
+    I8["Consulter toutes les id&eacute;es"]
+    I9["Scorer une id&eacute;e"]
+    I10["D&eacute;finir d&eacute;lai de scoring"]
+    I11["Valider une id&eacute;e scor&eacute;e"]
+    I12["Approuver au niveau BU"]
+    I13["Approuver au niveau DG"]
+    I14["Cl&ocirc;turer et cr&eacute;er projet"]
+    I15["Rejeter une id&eacute;e"]
+    I16["Supprimer une id&eacute;e"]
+  end
+
+  subgraph UC_CAMP["Campagnes"]
+    C1["Consulter les campagnes"]
+    C2["Cr&eacute;er une campagne"]
+    C3["Fermer une campagne"]
+  end
+
+  subgraph UC_PROJ["Gestion de Projets"]
+    P1["Consulter les projets"]
+    P2["Avancer l'&eacute;tape"]
+    P3["Cr&eacute;er un livrable"]
+    P4["Valider un livrable"]
+    P5["Cr&eacute;er une t&acirc;che"]
+    P6["Assigner une t&acirc;che"]
+    P7["Mettre &agrave; jour le statut t&acirc;che"]
+    P8["Inviter un membre"]
+    P9["Acc./Ref. invitation"]
+    P10["Envoyer un message"]
+    P11["Uploader document projet"]
+    P12["Supprimer un projet"]
+  end
+
+  subgraph UC_USER["Administration"]
+    U1["Cr&eacute;er un utilisateur"]
+    U2["Modifier un r&ocirc;le"]
+    U3["Supprimer un utilisateur"]
+    U4["Consulter profil"]
+  end
+
+  subgraph UC_NOTIF["Notifications"]
+    N1["Recevoir notifications"]
+    N2["Marquer comme lu"]
+  end
+
+  PI --> A1 & A2 & I1 & I2 & I3 & I4 & I5 & I6 & I7 & C1 & P9 & P7 & P10 & U4 & N1 & N2
+  RI --> A1 & I8 & I9 & I10 & I11 & I15 & C2 & C3 & P1 & P2 & P3 & P4 & P5 & P6 & P8 & P11 & U1 & U2 & U3
+  DBU --> A1 & I8 & I9 & I10 & I12 & I15 & C2 & C3 & P1
+  DG --> A1 & I8 & I9 & I13 & I14 & I15 & I16 & C2 & C3 & P1 & P12
+  </div>
+</div>
+
+<!-- ==================== 5. CLASS DIAGRAM ==================== -->
+<div class="page-break"></div>
+<h1 id="class"><span class="section-num">5</span> Diagramme de Classes</h1>
+
+<div class="diagram-container">
+  <div class="diagram-title">Diagramme de Classes &mdash; Mod&egrave;le de Donn&eacute;es</div>
+  <div class="mermaid">
+classDiagram
+    class User {
+        -String id
+        -String email
+        -String passwordHash
+        -String firstName
+        -String lastName
+        -UserRole role
+        -String businessUnit
+        -String department
+        -String avatarUrl
+        -Integer points
+        -Boolean isActive
+        -Instant lastLoginAt
+        -Instant createdAt
+        +getFullName() String
+    }
+
+    class Idea {
+        -String id
+        -String reference
+        -String title
+        -String category
+        -String problemStatement
+        -String proposedSolution
+        -String expectedRoi
+        -BigDecimal estimatedCost
+        -IdeaStatus status
+        -ProjectStage currentStage
+        -BigDecimal totalScore
+        -Instant scoringDeadline
+        -Instant submittedAt
+        -Instant createdAt
+    }
+
+    class IdeaScore {
+        -String id
+        -Integer innovationLevel
+        -Integer technicalFeasibility
+        -Integer strategicAlignment
+        -Integer roiPotential
+        -Integer riskLevel
+        -BigDecimal totalScore
+        -String comments
+        -Instant createdAt
+    }
+
+    class IdeaWorkflowHistory {
+        -String id
+        -IdeaStatus fromStatus
+        -IdeaStatus toStatus
+        -String comment
+        -Instant createdAt
+    }
+
+    class Campaign {
+        -String id
+        -String title
+        -String description
+        -String category
+        -String categoryColor
+        -String imageUrl
+        -String status
+        -LocalDate startDate
+        -LocalDate endDate
+        -Instant createdAt
+    }
+
+    class Project {
+        -String id
+        -String name
+        -String description
+        -ProjectStage currentStage
+        -Integer stageProgress
+        -String status
+        -LocalDate dueDate
+        -Instant launchedAt
+        -Instant closedAt
+    }
+
+    class ProjectDeliverable {
+        -String id
+        -String title
+        -ProjectStage stage
+        -Boolean isDone
+        -Instant doneAt
+        -Integer sortOrder
+    }
+
+    class ProjectTask {
+        -String id
+        -String title
+        -String description
+        -ProjectStage stage
+        -TaskStatus status
+        -LocalDate dueDate
+        -Instant createdAt
+    }
+
+    class ProjectTeamMember {
+        -String id
+        -String teamRole
+        -Instant addedAt
+    }
+
+    class TeamInvitation {
+        -String id
+        -String teamRole
+        -InvitationStatus status
+        -Instant responseDeadline
+        -String responseMessage
+        -Instant respondedAt
+    }
+
+    class ProjectMessage {
+        -String id
+        -String content
+        -String fileName
+        -String fileUrl
+        -Instant createdAt
+    }
+
+    class Comment {
+        -String id
+        -String content
+        -Instant createdAt
+    }
+
+    class Document {
+        -String id
+        -String fileName
+        -String filePath
+        -String fileType
+        -Long fileSizeBytes
+        -Instant createdAt
+    }
+
+    class Vote {
+        -String id
+        -Instant createdAt
+    }
+
+    class Notification {
+        -String id
+        -String type
+        -String title
+        -String message
+        -String link
+        -Boolean isRead
+        -Instant createdAt
+    }
+
+    class RefreshToken {
+        -String id
+        -String token
+        -Instant expiresAt
+    }
+
+    class UserRole {
+        &lt;&lt;enumeration&gt;&gt;
+        PORTEUR_IDEE
+        RESPONSABLE_INNOVATION
+        DIRECTEUR_BU
+        DIRECTEUR_GENERAL
+    }
+
+    class IdeaStatus {
+        &lt;&lt;enumeration&gt;&gt;
+        BROUILLON
+        SOUMISE
+        EN_VALIDATION
+        SCOREE
+        APPROUVEE_INNOVATION
+        APPROUVEE_BU
+        APPROUVEE_DG
+        REJETEE
+        CLOTUREE
+    }
+
+    class ProjectStage {
+        &lt;&lt;enumeration&gt;&gt;
+        EXPLORATION
+        CONCEPTUALISATION
+        PILOTE
+        MISE_A_ECHELLE
+    }
+
+    class TaskStatus {
+        &lt;&lt;enumeration&gt;&gt;
+        A_FAIRE
+        EN_COURS
+        TERMINEE
+    }
+
+    class InvitationStatus {
+        &lt;&lt;enumeration&gt;&gt;
+        EN_ATTENTE
+        ACCEPTEE
+        REFUSEE
+        EXPIREE
+    }
+
+    User "1" --> "*" Idea : soumet
+    User "1" --> "*" IdeaScore : &eacute;value
+    User "1" --> "*" Comment : r&eacute;dige
+    User "1" --> "*" Vote : vote
+    User "1" --> "*" Document : upload
+    User "1" --> "*" Notification : re&ccedil;oit
+    User "1" --> "*" RefreshToken : poss&egrave;de
+    User "1" --> "*" ProjectTeamMember : membre
+    User "1" --> "*" ProjectMessage : envoie
+
+    Idea "*" --> "0..1" Campaign : dans
+    Idea "1" --> "*" IdeaScore : scores
+    Idea "1" --> "*" IdeaWorkflowHistory : historique
+    Idea "1" --> "*" Comment : commentaires
+    Idea "1" --> "*" Document : documents
+    Idea "1" --> "*" Vote : votes
+    Idea "1" --> "0..1" Project : g&eacute;n&egrave;re
+
+    Campaign "*" --> "1" User : cr&eacute;&eacute;e par
+
+    Project "1" --> "*" ProjectDeliverable : livrables
+    Project "1" --> "*" ProjectTask : t&acirc;ches
+    Project "1" --> "*" ProjectTeamMember : &eacute;quipe
+    Project "1" --> "*" TeamInvitation : invitations
+    Project "1" --> "*" ProjectMessage : messages
+    Project "1" --> "*" Document : documents
+    Project "*" --> "1" User : propri&eacute;taire
+
+    ProjectTask "*" --> "0..1" User : assign&eacute;e &agrave;
+    TeamInvitation "*" --> "1" User : invit&eacute;
+    Comment "*" --> "0..1" Comment : r&eacute;ponse &agrave;
+  </div>
+</div>
+
+<!-- ==================== 6. SEQUENCE DIAGRAMS ==================== -->
+<div class="page-break"></div>
+<h1 id="seq"><span class="section-num">6</span> Diagrammes de S&eacute;quence</h1>
+
+<h2 id="seq-auth">6.1 Authentification (Login)</h2>
+<div class="diagram-container no-break">
+  <div class="mermaid">
+sequenceDiagram
+    actor U as Utilisateur
+    participant F as Frontend (Next.js)
+    participant B as Backend (Spring Boot)
+    participant DB as MySQL
+    participant JWT as JwtUtil
+
+    U->>F: Saisie email + mot de passe
+    F->>B: POST /auth/login {email, password}
+    B->>DB: findByEmail(email)
+    DB-->>B: User entity
+    B->>B: V&eacute;rifier isActive == true
+    B->>B: BCrypt.matches(password, passwordHash)
+    alt Identifiants valides
+        B->>JWT: generateToken(userId, email, role)
+        JWT-->>B: accessToken (JWT, 24h)
+        B->>DB: Cr&eacute;er RefreshToken (UUID, 7j)
+        B->>DB: Update lastLoginAt
+        B-->>F: 200 {accessToken, refreshToken, user}
+        F->>F: localStorage.setItem(tokens)
+        F->>U: Redirection vers Dashboard
+    else Identifiants invalides
+        B-->>F: 401 "Email ou mot de passe incorrect"
+        F->>U: Afficher erreur
+    end
+  </div>
+</div>
+
+<h2 id="seq-idea">6.2 Soumission d'une Id&eacute;e</h2>
+<div class="diagram-container no-break">
+  <div class="mermaid">
+sequenceDiagram
+    actor PI as Porteur d'Id&eacute;e
+    participant F as Frontend
+    participant B as Backend
+    participant DB as MySQL
+    participant WS as WebSocket
+    participant N as NotificationService
+
+    PI->>F: Remplir formulaire 3 &eacute;tapes
+    Note over F: &Eacute;tape 1: Titre, cat&eacute;gorie, probl&egrave;me, solution
+    Note over F: &Eacute;tape 2: ROI, co&ucirc;t, campagne, pi&egrave;ces jointes
+    Note over F: &Eacute;tape 3: R&eacute;vision et confirmation
+
+    PI->>F: Cliquer "Soumettre"
+    F->>B: POST /ideas {SubmitIdeaRequest, draft=false}
+    B->>B: G&eacute;n&eacute;rer r&eacute;f&eacute;rence "ID-2026-XXXXXX"
+    B->>B: status = SOUMISE, submittedAt = now()
+    B->>DB: save(Idea)
+    DB-->>B: Idea (id)
+
+    opt Pi&egrave;ces jointes
+        F->>B: POST /ideas/{id}/documents (FormData)
+        B->>B: Sauvegarder fichier sur disque
+        B->>DB: save(Document)
+    end
+
+    B->>DB: findByRole(RESPONSABLE_INNOVATION)
+    DB-->>B: Liste managers
+    loop Pour chaque RESP_INNOVATION
+        B->>N: notify(user, "Nouvelle id&eacute;e soumise")
+        N->>DB: save(Notification)
+        N->>WS: broadcast /user/{id}/notifications
+    end
+
+    B-->>F: 200 ApiResponse(IdeaDetailResponse)
+    F->>PI: Succ&egrave;s + Redirection /mes-idees
+  </div>
+</div>
+
+<div class="page-break"></div>
+<h2 id="seq-score">6.3 &Eacute;valuation (Scoring) d'une Id&eacute;e</h2>
+<div class="diagram-container no-break">
+  <div class="mermaid">
+sequenceDiagram
+    actor M as Manager (3 r&ocirc;les)
+    participant F as Frontend
+    participant B as Backend
+    participant DB as MySQL
+    participant N as NotificationService
+
+    M->>F: Ouvrir id&eacute;e sur /approbation
+    F->>B: GET /ideas/{id}
+    B-->>F: IdeaDetailResponse (status: SOUMISE)
+
+    M->>F: Remplir grille de scoring (5 crit&egrave;res, 0-10)
+    F->>B: POST /ideas/{id}/score {ScoreIdeaRequest}
+
+    B->>B: V&eacute;rifier statut (SOUMISE ou EN_VALIDATION)
+    B->>B: V&eacute;rifier deadline non d&eacute;pass&eacute;e
+    B->>DB: V&eacute;rifier pas de score existant (m&ecirc;me r&ocirc;le)
+    B->>B: Calculer totalScore pond&eacute;r&eacute;
+    Note over B: Innovation&times;0.25 + Technique&times;0.20 + Strat&eacute;gie&times;0.25 + ROI&times;0.20 + (10-Risque)&times;0.10
+    B->>DB: save(IdeaScore)
+
+    B->>DB: count scores pour cette id&eacute;e
+    alt 3 scores (un par r&ocirc;le)
+        B->>B: Calculer moyenne des 3 scores
+        B->>B: idea.totalScore = moyenne
+        B->>B: idea.status = SCOREE
+        B->>DB: save(Idea)
+        B->>N: Notifier submitter "Id&eacute;e &eacute;valu&eacute;e"
+        B->>N: Notifier DIRECTEUR_BU "Id&eacute;e &agrave; approuver"
+    else Moins de 3 scores
+        B->>B: idea.status = EN_VALIDATION
+        B->>DB: save(Idea)
+    end
+
+    B-->>F: 200 IdeaScoreResponse
+    F->>M: Score enregistr&eacute;
+  </div>
+</div>
+
+<div class="page-break"></div>
+<h2 id="seq-approve">6.4 Approbation Multi-Niveaux</h2>
+<div class="diagram-container no-break">
+  <div class="mermaid">
+sequenceDiagram
+    actor RI as Resp. Innovation
+    actor DBU as Directeur BU
+    actor DG as Directeur G&eacute;n&eacute;ral
+    participant F as Frontend
+    participant B as Backend
+    participant DB as MySQL
+    participant N as NotificationService
+
+    Note over RI,N: Niveau 1 : Validation Innovation
+    RI->>F: Cliquer "Valider" sur id&eacute;e SCOREE
+    F->>B: POST /ideas/{id}/workflow {action: VALIDATE}
+    B->>B: V&eacute;rifier r&ocirc;le RESP_INNOV + statut SCOREE
+    B->>B: status = APPROUVEE_INNOVATION
+    B->>DB: save(Idea) + save(WorkflowHistory)
+    B->>N: Notifier submitter + DIRECTEUR_BU
+    B-->>F: 200 IdeaDetailResponse
+
+    Note over DBU,N: Niveau 2 : Approbation BU
+    DBU->>F: Cliquer "Approuver BU"
+    F->>B: POST /ideas/{id}/workflow {action: APPROVE_BU}
+    B->>B: V&eacute;rifier r&ocirc;le DIR_BU + statut APPROUVEE_INNOVATION
+    B->>B: status = APPROUVEE_BU
+    B->>DB: save(Idea) + save(WorkflowHistory)
+    B->>N: Notifier submitter + DIRECTEUR_GENERAL
+    B-->>F: 200 IdeaDetailResponse
+
+    Note over DG,N: Niveau 3 : Approbation DG
+    DG->>F: Cliquer "Approuver DG"
+    F->>B: POST /ideas/{id}/workflow {action: APPROVE_DG}
+    B->>B: V&eacute;rifier r&ocirc;le DIR_GEN + statut APPROUVEE_BU
+    B->>B: status = APPROUVEE_DG
+    B->>DB: save(Idea) + save(WorkflowHistory)
+    B->>N: Notifier submitter
+    B-->>F: 200 IdeaDetailResponse
+  </div>
+</div>
+
+<div class="page-break"></div>
+<h2 id="seq-project">6.5 Cl&ocirc;ture d'Id&eacute;e &amp; Cr&eacute;ation de Projet</h2>
+<div class="diagram-container no-break">
+  <div class="mermaid">
+sequenceDiagram
+    actor DG as Directeur G&eacute;n&eacute;ral
+    participant F as Frontend
+    participant B as Backend
+    participant DB as MySQL
+    participant N as NotificationService
+
+    DG->>F: Cliquer "Cl&ocirc;turer et cr&eacute;er projet"
+    F->>B: POST /ideas/{id}/workflow {action: CLOSE}
+
+    B->>B: V&eacute;rifier r&ocirc;le DIR_GEN + statut APPROUVEE_DG
+    B->>B: idea.status = CLOTUREE
+    B->>B: idea.currentStage = EXPLORATION
+
+    B->>DB: findFirstByRole(RESPONSABLE_INNOVATION)
+    DB-->>B: User (propri&eacute;taire du projet)
+
+    B->>B: Cr&eacute;er Project(name, description, owner, stage=EXPLORATION)
+    B->>DB: save(Project)
+
+    Note over B,DB: Cr&eacute;ation de 4 livrables par d&eacute;faut
+    B->>DB: save(Deliverable "Faisabilit&eacute; technique")
+    B->>DB: save(Deliverable "Analyse march&eacute;")
+    B->>DB: save(Deliverable "Partenaires cl&eacute;s")
+    B->>DB: save(Deliverable "Estimation budg&eacute;taire")
+
+    B->>B: submitter.points += 500
+    B->>DB: save(User submitter)
+
+    B->>DB: save(WorkflowHistory)
+    B->>N: Notifier submitter "Id&eacute;e cl&ocirc;tur&eacute;e +500 pts"
+    B->>N: Notifier RESP_INNOV "Nouveau projet cr&eacute;&eacute;"
+
+    B-->>F: 200 IdeaDetailResponse(status: CLOTUREE)
+    F->>DG: Redirection /suivi-projet?id={projectId}
+  </div>
+</div>
+
+<div class="page-break"></div>
+<h2 id="seq-team">6.6 Gestion d'&Eacute;quipe (Invitation)</h2>
+<div class="diagram-container no-break">
+  <div class="mermaid">
+sequenceDiagram
+    actor RI as Resp. Innovation
+    actor M as Membre invit&eacute;
+    participant F as Frontend
+    participant B as Backend
+    participant DB as MySQL
+    participant WS as WebSocket
+    participant N as NotificationService
+
+    RI->>F: S&eacute;lectionner utilisateur + r&ocirc;le
+    F->>B: POST /projects/{id}/team {userId, teamRole, responseDeadline}
+
+    B->>B: V&eacute;rifier r&ocirc;le RESP_INNOV
+    B->>DB: V&eacute;rifier pas d&eacute;j&agrave; membre
+    B->>DB: V&eacute;rifier pas d'invitation en attente
+    B->>B: Cr&eacute;er TeamInvitation(status: EN_ATTENTE)
+    B->>DB: save(TeamInvitation)
+
+    B->>WS: broadcast /user/{userId}/invitations
+    B->>N: Notifier invit&eacute; "Invitation projet"
+    B-->>F: 200 TeamInvitationResponse
+
+    Note over M: Re&ccedil;oit notification en temps r&eacute;el
+    M->>F: Ouvrir /mes-invitations
+    M->>F: Cliquer "Accepter"
+    F->>B: POST /projects/invitations/{id}/respond {action: ACCEPT}
+
+    B->>B: V&eacute;rifier statut EN_ATTENTE + deadline
+    B->>B: invitation.status = ACCEPTEE
+    B->>DB: save(TeamInvitation)
+    B->>B: Cr&eacute;er ProjectTeamMember
+    B->>DB: save(ProjectTeamMember)
+    B->>N: Notifier inviteur "Invitation accept&eacute;e"
+
+    B-->>F: 200 TeamInvitationResponse(status: ACCEPTEE)
+    F->>M: Confirmation + acc&egrave;s au projet
+  </div>
+</div>
+
+<!-- ==================== 7. BPMN ==================== -->
+<div class="page-break"></div>
+<h1 id="bpmn"><span class="section-num">7</span> Diagramme BPMN &mdash; Processus Global d'Innovation</h1>
+
+<div class="diagram-container">
+  <div class="diagram-title">BPMN &mdash; Processus complet de bout en bout</div>
+  <div class="mermaid">
+flowchart TD
+    START(("&#9899; D&eacute;but")) --> A1
+
+    subgraph PHASE1["Phase 1 : Soumission"]
+        A1["Porteur r&eacute;dige l'id&eacute;e<br>(formulaire 3 &eacute;tapes)"]
+        A2{"Enregistrer<br>comme brouillon ?"}
+        A3["Sauvegarder<br>BROUILLON"]
+        A4["Soumettre l'id&eacute;e<br>status: SOUMISE"]
+        A5["Notifier les<br>Resp. Innovation"]
+    end
+
+    A1 --> A2
+    A2 -- Oui --> A3
+    A3 -.-> A1
+    A2 -- Non --> A4
+    A4 --> A5
+
+    subgraph PHASE2["Phase 2 : &Eacute;valuation"]
+        B1["Resp. Innovation<br>&eacute;value (score)"]
+        B2["Directeur BU<br>&eacute;value (score)"]
+        B3["Directeur G&eacute;n&eacute;ral<br>&eacute;value (score)"]
+        B4{"3 scores<br>re&ccedil;us ?"}
+        B5["Calculer score moyen<br>status: SCOREE"]
+        B6["status:<br>EN_VALIDATION"]
+    end
+
+    A5 --> B1 & B2 & B3
+    B1 & B2 & B3 --> B4
+    B4 -- Oui --> B5
+    B4 -- Non --> B6
+    B6 -.-> B1
+
+    subgraph PHASE3["Phase 3 : Approbation"]
+        C1["Resp. Innovation<br>valide"]
+        C1R{"Accept&eacute; ?"}
+        C2["status:<br>APPROUVEE_INNOVATION"]
+        C3["Directeur BU<br>approuve"]
+        C3R{"Accept&eacute; ?"}
+        C4["status:<br>APPROUVEE_BU"]
+        C5["Directeur G&eacute;n&eacute;ral<br>approuve"]
+        C5R{"Accept&eacute; ?"}
+        C6["status:<br>APPROUVEE_DG"]
+        REJ["status: REJETEE"]
+    end
+
+    B5 --> C1
+    C1 --> C1R
+    C1R -- Oui --> C2
+    C1R -- Non --> REJ
+    C2 --> C3
+    C3 --> C3R
+    C3R -- Oui --> C4
+    C3R -- Non --> REJ
+    C4 --> C5
+    C5 --> C5R
+    C5R -- Oui --> C6
+    C5R -- Non --> REJ
+
+    subgraph PHASE4["Phase 4 : Transformation"]
+        D1["DG cl&ocirc;ture l'id&eacute;e"]
+        D2["Cr&eacute;ation automatique<br>du Projet"]
+        D3["4 livrables par d&eacute;faut<br>(Exploration)"]
+        D4["+500 points<br>au porteur"]
+    end
+
+    C6 --> D1
+    D1 --> D2
+    D2 --> D3 & D4
+
+    subgraph PHASE5["Phase 5 : Ex&eacute;cution Projet"]
+        E1["EXPLORATION"]
+        E2["CONCEPTUALISATION"]
+        E3["PILOTE"]
+        E4["MISE &Agrave; L'&Eacute;CHELLE"]
+        E5["Projet TERMIN&Eacute;"]
+        ET{"Toutes t&acirc;ches<br>et livrables<br>termin&eacute;s ?"}
+    end
+
+    D3 --> E1
+    E1 --> ET
+    ET -- Oui --> E2
+    ET -- Non --> E1
+    E2 --> ET
+    E3 --> ET
+    ET -- Oui --> E3
+    ET -- Oui --> E4
+    E4 --> E5
+
+    REJ --> ENDR(("&#9899; Fin (Rejet&eacute;e)"))
+    E5 --> ENDS(("&#9899; Fin (Succ&egrave;s)"))
+
+    style PHASE1 fill:#EDE9FE,stroke:#6C3AED,stroke-width:2px
+    style PHASE2 fill:#DBEAFE,stroke:#2563EB,stroke-width:2px
+    style PHASE3 fill:#FEF3C7,stroke:#D97706,stroke-width:2px
+    style PHASE4 fill:#D1FAE5,stroke:#059669,stroke-width:2px
+    style PHASE5 fill:#FCE7F3,stroke:#DB2777,stroke-width:2px
+    style REJ fill:#FEE2E2,stroke:#DC2626
+    style ENDS fill:#D1FAE5,stroke:#059669
+    style ENDR fill:#FEE2E2,stroke:#DC2626
+  </div>
+</div>
+
+<!-- ==================== 8. WORKFLOW ==================== -->
+<div class="page-break"></div>
+<h1 id="workflow"><span class="section-num">8</span> Workflow Complet</h1>
+
+<h2 id="wf-idea">8.1 Cycle de Vie d'une Id&eacute;e &mdash; Machine &agrave; &Eacute;tats</h2>
+
+<div class="diagram-container">
+  <div class="diagram-title">Machine &agrave; &eacute;tats &mdash; Statuts d'une id&eacute;e</div>
+  <div class="mermaid">
+stateDiagram-v2
+    [*] --> BROUILLON : Cr&eacute;ation
+    BROUILLON --> SOUMISE : Soumettre (Porteur)
+    SOUMISE --> EN_VALIDATION : 1er score re&ccedil;u
+    EN_VALIDATION --> EN_VALIDATION : 2e score re&ccedil;u
+    EN_VALIDATION --> SCOREE : 3e score (complet)
+    SOUMISE --> SCOREE : 3 scores simultan&eacute;s
+    SCOREE --> APPROUVEE_INNOVATION : Valider (Resp.Innov)
+    APPROUVEE_INNOVATION --> APPROUVEE_BU : Approuver (Dir.BU)
+    APPROUVEE_BU --> APPROUVEE_DG : Approuver (Dir.G&eacute;n)
+    APPROUVEE_DG --> CLOTUREE : Cl&ocirc;turer (Dir.G&eacute;n)
+
+    SOUMISE --> REJETEE : Rejeter
+    EN_VALIDATION --> REJETEE : Rejeter
+    SCOREE --> REJETEE : Rejeter
+    APPROUVEE_INNOVATION --> REJETEE : Rejeter
+    APPROUVEE_BU --> REJETEE : Rejeter
+
+    CLOTUREE --> [*]
+    REJETEE --> [*]
+
+    state BROUILLON {
+      [*] --> modifiable
+      note right of modifiable : Modifiable par le porteur
+    }
+
+    state SCOREE {
+      [*] --> scored
+      note right of scored : Score moyen calcul&eacute;
+    }
+
+    state CLOTUREE {
+      [*] --> projet_cree
+      note right of projet_cree : Projet cr&eacute;&eacute; automatiquement
+    }
+  </div>
+</div>
+
+<h3>D&eacute;tail des Transitions</h3>
+<table>
+  <tr><th>De</th><th>Vers</th><th>Action</th><th>D&eacute;clencheur</th><th>Condition</th></tr>
+  <tr><td><span class="tag tag-slate">BROUILLON</span></td><td><span class="tag tag-blue">SOUMISE</span></td><td>SUBMIT</td><td>Porteur d'id&eacute;e</td><td>Champs requis remplis</td></tr>
+  <tr><td><span class="tag tag-blue">SOUMISE</span></td><td><span class="tag tag-amber">EN_VALIDATION</span></td><td>Score</td><td>Automatique</td><td>1er ou 2e score re&ccedil;u</td></tr>
+  <tr><td><span class="tag tag-amber">EN_VALIDATION</span></td><td><span class="tag tag-purple">SCOREE</span></td><td>Score</td><td>Automatique</td><td>3 scores (1 par r&ocirc;le)</td></tr>
+  <tr><td><span class="tag tag-purple">SCOREE</span></td><td><span class="tag tag-green">APPROUVEE_INNOV</span></td><td>VALIDATE</td><td>Resp. Innovation</td><td>R&ocirc;le = RESP_INNOV</td></tr>
+  <tr><td><span class="tag tag-green">APPROUVEE_INNOV</span></td><td><span class="tag tag-green">APPROUVEE_BU</span></td><td>APPROVE_BU</td><td>Directeur BU</td><td>R&ocirc;le = DIR_BU</td></tr>
+  <tr><td><span class="tag tag-green">APPROUVEE_BU</span></td><td><span class="tag tag-green">APPROUVEE_DG</span></td><td>APPROVE_DG</td><td>Directeur G&eacute;n&eacute;ral</td><td>R&ocirc;le = DIR_GEN</td></tr>
+  <tr><td><span class="tag tag-green">APPROUVEE_DG</span></td><td><span class="tag tag-slate">CLOTUREE</span></td><td>CLOSE</td><td>Directeur G&eacute;n&eacute;ral</td><td>R&ocirc;le = DIR_GEN</td></tr>
+  <tr><td><em>Tout sauf terminal</em></td><td><span class="tag tag-red">REJETEE</span></td><td>REJECT</td><td>Manager</td><td>Statut non terminal</td></tr>
+</table>
+
+<h3>Formule de Scoring</h3>
+<div class="info-box blue">
+  <strong>Score Total = </strong>
+  Innovation &times; 0.25 + Faisabilit&eacute; Technique &times; 0.20 + Alignement Strat&eacute;gique &times; 0.25 + Potentiel ROI &times; 0.20 + (10 &minus; Risque) &times; 0.10<br><br>
+  <strong>R&egrave;gle :</strong> 3 scores requis (un par r&ocirc;le : Resp. Innovation, Dir. BU, Dir. G&eacute;n&eacute;ral). Score final = moyenne des 3 scores.
+</div>
+
+<div class="page-break"></div>
+<h2 id="wf-project">8.2 Pipeline Projet &mdash; 4 &Eacute;tapes</h2>
+
+<div class="diagram-container no-break">
+  <div class="diagram-title">Pipeline de Projet &mdash; Progression des &eacute;tapes</div>
+  <div class="mermaid">
+stateDiagram-v2
+    [*] --> EXPLORATION : Projet cr&eacute;&eacute;
+    EXPLORATION --> CONCEPTUALISATION : Avancer &eacute;tape
+    CONCEPTUALISATION --> PILOTE : Avancer &eacute;tape
+    PILOTE --> MISE_A_ECHELLE : Avancer &eacute;tape
+    MISE_A_ECHELLE --> TERMINE : Avancer &eacute;tape
+
+    TERMINE --> [*]
+
+    note right of EXPLORATION
+      Livrables par d&eacute;faut :
+      - Faisabilit&eacute; technique
+      - Analyse march&eacute;
+      - Partenaires cl&eacute;s
+      - Estimation budg&eacute;taire
+    end note
+
+    note right of MISE_A_ECHELLE
+      Condition d'avancement :
+      Toutes t&acirc;ches TERMINEE
+      Tous livrables valid&eacute;s
+    end note
+  </div>
+</div>
+
+<h3>R&egrave;gles d'Avancement</h3>
+<table>
+  <tr><th>R&egrave;gle</th><th>Description</th></tr>
+  <tr><td><strong>Pr&eacute;-condition</strong></td><td>Toutes les t&acirc;ches de l'&eacute;tape courante doivent avoir le statut <code>TERMINEE</code></td></tr>
+  <tr><td><strong>Livrables</strong></td><td>Tous les livrables de l'&eacute;tape courante doivent &ecirc;tre marqu&eacute;s comme <code>done</code></td></tr>
+  <tr><td><strong>Autorisation</strong></td><td>Seul le propri&eacute;taire du projet ou un RESPONSABLE_INNOVATION peut avancer l'&eacute;tape</td></tr>
+  <tr><td><strong>Progression</strong></td><td>Le pourcentage de progression est recalcul&eacute; automatiquement (livrables + t&acirc;ches)</td></tr>
+  <tr><td><strong>&Eacute;tape finale</strong></td><td>Apr&egrave;s MISE_A_ECHELLE, le projet passe en statut <code>TERMINE</code>, <code>closedAt</code> est d&eacute;fini</td></tr>
+</table>
+
+<div class="page-break"></div>
+<h2 id="wf-invite">8.3 Workflow d'Invitations &amp; Gestion d'&Eacute;quipe</h2>
+
+<div class="diagram-container no-break">
+  <div class="diagram-title">Machine &agrave; &eacute;tats &mdash; Invitation &agrave; rejoindre un projet</div>
+  <div class="mermaid">
+stateDiagram-v2
+    [*] --> EN_ATTENTE : Resp. Innovation invite
+    EN_ATTENTE --> ACCEPTEE : Invit&eacute; accepte
+    EN_ATTENTE --> REFUSEE : Invit&eacute; refuse
+    EN_ATTENTE --> EXPIREE : D&eacute;lai d&eacute;pass&eacute;
+
+    ACCEPTEE --> [*] : Membre ajout&eacute; &agrave; l'&eacute;quipe
+    REFUSEE --> [*] : Notification inviteur
+    EXPIREE --> [*] : Invitation expir&eacute;e
+
+    note right of ACCEPTEE
+      Cr&eacute;ation automatique
+      de ProjectTeamMember
+    end note
+  </div>
+</div>
+
+<!-- ==================== 9. NOTIFICATIONS ==================== -->
+<div class="page-break"></div>
+<h1 id="notif"><span class="section-num">9</span> Syst&egrave;me de Notifications</h1>
+
+<p>Le syst&egrave;me envoie des notifications automatiques &agrave; chaque &eacute;v&eacute;nement cl&eacute; du workflow. Les notifications sont persistantes (stock&eacute;es en base) et diffus&eacute;es en temps r&eacute;el via WebSocket.</p>
+
+<h3>Notifications li&eacute;es aux Id&eacute;es</h3>
+<table>
+  <tr><th>&Eacute;v&eacute;nement</th><th>Destinataire(s)</th><th>Titre</th></tr>
+  <tr><td>Id&eacute;e soumise</td><td>Tous les RESP_INNOVATION</td><td>Nouvelle id&eacute;e soumise</td></tr>
+  <tr><td>Id&eacute;e scor&eacute;e (3 scores)</td><td>Porteur de l'id&eacute;e</td><td>Id&eacute;e &eacute;valu&eacute;e</td></tr>
+  <tr><td>Id&eacute;e valid&eacute;e (Resp. Innov)</td><td>Porteur + Directeurs BU</td><td>Id&eacute;e valid&eacute;e / &Agrave; approuver</td></tr>
+  <tr><td>Id&eacute;e approuv&eacute;e BU</td><td>Porteur + Directeurs G&eacute;n&eacute;raux</td><td>Id&eacute;e approuv&eacute;e BU / &Agrave; approuver</td></tr>
+  <tr><td>Id&eacute;e approuv&eacute;e DG</td><td>Porteur</td><td>Id&eacute;e approuv&eacute;e DG</td></tr>
+  <tr><td>Id&eacute;e rejet&eacute;e</td><td>Porteur</td><td>Id&eacute;e rejet&eacute;e</td></tr>
+  <tr><td>Id&eacute;e cl&ocirc;tur&eacute;e</td><td>Porteur + RESP_INNOV</td><td>Id&eacute;e cl&ocirc;tur&eacute;e + Projet cr&eacute;&eacute;</td></tr>
+</table>
+
+<h3>Notifications li&eacute;es aux Projets</h3>
+<table>
+  <tr><th>&Eacute;v&eacute;nement</th><th>Destinataire(s)</th><th>Titre</th></tr>
+  <tr><td>T&acirc;che assign&eacute;e</td><td>Membre assign&eacute;</td><td>Nouvelle t&acirc;che assign&eacute;e</td></tr>
+  <tr><td>T&acirc;che termin&eacute;e</td><td>Propri&eacute;taire projet</td><td>T&acirc;che termin&eacute;e</td></tr>
+  <tr><td>&Eacute;tape avanc&eacute;e</td><td>Propri&eacute;taire projet</td><td>&Eacute;tape avanc&eacute;e</td></tr>
+  <tr><td>Projet termin&eacute;</td><td>Propri&eacute;taire projet</td><td>Projet termin&eacute;</td></tr>
+  <tr><td>Invitation envoy&eacute;e</td><td>Utilisateur invit&eacute;</td><td>Invitation &agrave; rejoindre un projet</td></tr>
+  <tr><td>Invitation accept&eacute;e</td><td>Inviteur</td><td>Invitation accept&eacute;e</td></tr>
+  <tr><td>Invitation refus&eacute;e</td><td>Inviteur</td><td>Invitation refus&eacute;e</td></tr>
+  <tr><td>Message dans le chat</td><td>&Eacute;quipe projet (sauf exp&eacute;diteur)</td><td>Nouveau message</td></tr>
+</table>
+
+<h3>Notifications li&eacute;es aux Campagnes</h3>
+<table>
+  <tr><th>&Eacute;v&eacute;nement</th><th>Destinataire(s)</th><th>Titre</th></tr>
+  <tr><td>Campagne cr&eacute;&eacute;e</td><td>Tous les PORTEUR_IDEE</td><td>Nouvelle campagne</td></tr>
+  <tr><td>Campagne termin&eacute;e</td><td>Tous les utilisateurs</td><td>Campagne termin&eacute;e</td></tr>
+</table>
+
+<!-- ==================== 10. SECURITE ==================== -->
+<div class="page-break"></div>
+<h1 id="sec"><span class="section-num">10</span> S&eacute;curit&eacute; &amp; Matrice de Permissions</h1>
+
+<h3>Architecture de S&eacute;curit&eacute;</h3>
+<div class="info-box blue">
+  <strong>Authentification :</strong> JWT (JSON Web Tokens) &mdash; Stateless<br>
+  <strong>Access Token :</strong> 24h (HMAC SHA-256, contient userId, email, r&ocirc;le)<br>
+  <strong>Refresh Token :</strong> 7 jours (UUID stock&eacute; en base)<br>
+  <strong>Hachage mot de passe :</strong> BCrypt<br>
+  <strong>CORS :</strong> localhost:3000, 3001, 3002<br>
+  <strong>CSRF :</strong> D&eacute;sactiv&eacute; (API REST stateless)<br>
+  <strong>Session :</strong> Stateless (pas de session c&ocirc;t&eacute; serveur)
+</div>
+
+<h3>Matrice de Permissions par Endpoint</h3>
+<table>
+  <tr><th>Ressource</th><th><span class="tag tag-blue">Porteur</span></th><th><span class="tag tag-purple">Resp. Innov</span></th><th><span class="tag tag-amber">Dir. BU</span></th><th><span class="tag tag-red">Dir. G&eacute;n</span></th></tr>
+  <tr><td>POST /ideas (soumettre)</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
+  <tr><td>GET /ideas (toutes)</td><td>&#10007;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
+  <tr><td>GET /ideas/mine</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
+  <tr><td>POST /ideas/{id}/score</td><td>&#10007;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
+  <tr><td>VALIDATE (workflow)</td><td>&#10007;</td><td>&#10003;</td><td>&#10007;</td><td>&#10007;</td></tr>
+  <tr><td>APPROVE_BU (workflow)</td><td>&#10007;</td><td>&#10007;</td><td>&#10003;</td><td>&#10007;</td></tr>
+  <tr><td>APPROVE_DG (workflow)</td><td>&#10007;</td><td>&#10007;</td><td>&#10007;</td><td>&#10003;</td></tr>
+  <tr><td>CLOSE (workflow)</td><td>&#10007;</td><td>&#10007;</td><td>&#10007;</td><td>&#10003;</td></tr>
+  <tr><td>REJECT (workflow)</td><td>&#10007;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
+  <tr><td>DELETE /ideas/{id}</td><td>&#10007;</td><td>&#10007;</td><td>&#10007;</td><td>&#10003;</td></tr>
+  <tr><td>POST /campaigns</td><td>&#10007;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
+  <tr><td>GET /projects (tous)</td><td>&#10007;</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
+  <tr><td>POST /projects/{id}/tasks</td><td>&#10007;</td><td>&#10003;</td><td>&#10007;</td><td>&#10007;</td></tr>
+  <tr><td>POST /projects/{id}/team</td><td>&#10007;</td><td>&#10003;</td><td>&#10007;</td><td>&#10007;</td></tr>
+  <tr><td>POST /users</td><td>&#10007;</td><td>&#10003;</td><td>&#10007;</td><td>&#10007;</td></tr>
+  <tr><td>DELETE /projects/{id}</td><td>&#10007;</td><td>&#10007;</td><td>&#10007;</td><td>&#10003;</td></tr>
+</table>
+
+<h3>Endpoints Publics (sans authentification)</h3>
+<table>
+  <tr><th>Endpoint</th><th>Usage</th></tr>
+  <tr><td><code>POST /auth/login</code></td><td>Connexion</td></tr>
+  <tr><td><code>POST /auth/refresh</code></td><td>Renouvellement token</td></tr>
+  <tr><td><code>GET /ws/**</code></td><td>WebSocket</td></tr>
+  <tr><td><code>GET /documents/images/**</code></td><td>Images campagnes (img tags)</td></tr>
+  <tr><td><code>GET /swagger-ui/**</code></td><td>Documentation API</td></tr>
+</table>
+
+<div style="margin-top: 4rem; padding: 2rem; text-align: center; border-top: 2px solid var(--border); color: var(--gray);">
+  <p><strong>InnovHub</strong> &mdash; Rapport Technique Complet</p>
+  <p>G&eacute;n&eacute;r&eacute; automatiquement &mdash; Mars 2026</p>
+  <p style="font-size: 0.8em;">Confidentiel &mdash; Usage interne uniquement</p>
+</div>
+
+</div>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      primaryColor: '#EDE9FE',
+      primaryBorderColor: '#6C3AED',
+      primaryTextColor: '#1E1B4B',
+      lineColor: '#6C3AED',
+      secondaryColor: '#DBEAFE',
+      tertiaryColor: '#F8FAFC',
+      fontSize: '13px'
+    },
+    flowchart: { useMaxWidth: true, htmlLabels: true, curve: 'basis' },
+    sequence: { useMaxWidth: true, actorFontSize: 13, messageFontSize: 12, noteFontSize: 11 },
+    stateDiagram: { useMaxWidth: true },
+    class: { useMaxWidth: true }
+  });
+</script>
+</body>
+</html>

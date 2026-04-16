@@ -25,6 +25,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.Instant;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -86,10 +88,10 @@ public class IdeaController {
     }
 
     @PostMapping("/{id}/score")
-    @PreAuthorize("hasRole('RESPONSABLE_INNOVATION')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<IdeaScoreResponse>> scoreIdea(@PathVariable String id, @Valid @RequestBody ScoreIdeaRequest req) {
         IdeaScoreResponse result = ideaService.scoreIdea(id, req, getCurrentUser());
-        return ResponseEntity.ok(ApiResponse.ok(result));
+        return ResponseEntity.ok(ApiResponse.ok("Score enregistré", result));
     }
 
     @PostMapping("/{id}/workflow")
@@ -111,6 +113,32 @@ public class IdeaController {
     public ResponseEntity<ApiResponse<Void>> addComment(@PathVariable String id, @Valid @RequestBody AddCommentRequest req) {
         ideaService.addComment(id, req, getCurrentUser());
         return ResponseEntity.ok(ApiResponse.ok("Commentaire ajouté", null));
+    }
+
+    @PatchMapping("/{id}/scoring-deadline")
+    @PreAuthorize("hasAnyRole('RESPONSABLE_INNOVATION','DIRECTEUR_BU','DIRECTEUR_GENERAL')")
+    public ResponseEntity<ApiResponse<IdeaDetailResponse>> setScoringDeadline(@PathVariable String id, @RequestBody Map<String, String> body) {
+        Instant deadline = Instant.parse(body.get("scoringDeadline"));
+        IdeaDetailResponse result = ideaService.setScoringDeadline(id, deadline, getCurrentUser());
+        return ResponseEntity.ok(ApiResponse.ok("Délai de scoring défini", result));
+    }
+
+    @GetMapping("/{id}/documents")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<java.util.List<Map<String, Object>>>> getDocuments(@PathVariable String id) {
+        var docs = documentService.getDocumentsForIdea(id);
+        var result = docs.stream().map(d -> {
+            Map<String, Object> m = new java.util.LinkedHashMap<>();
+            m.put("id", d.getId());
+            m.put("fileName", d.getFileName());
+            m.put("fileType", d.getFileType());
+            m.put("fileSizeBytes", d.getFileSizeBytes());
+            m.put("uploadedByName", d.getUploadedBy().getFullName());
+            m.put("createdAt", d.getCreatedAt());
+            m.put("downloadUrl", "/documents/" + d.getId() + "/download");
+            return m;
+        }).toList();
+        return ResponseEntity.ok(ApiResponse.ok(result));
     }
 
     @PostMapping("/{id}/documents")

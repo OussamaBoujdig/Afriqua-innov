@@ -3,9 +3,12 @@ package com.innovhub.service;
 import com.innovhub.dto.response.CampaignResponse;
 import com.innovhub.entity.Campaign;
 import com.innovhub.entity.User;
+import com.innovhub.enums.UserRole;
+import com.innovhub.exception.BadRequestException;
 import com.innovhub.exception.ResourceNotFoundException;
 import com.innovhub.repository.CampaignRepository;
 import com.innovhub.repository.IdeaRepository;
+import com.innovhub.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -22,6 +25,8 @@ public class CampaignService {
 
     private final CampaignRepository campaignRepository;
     private final IdeaRepository ideaRepository;
+    private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     public Page<CampaignResponse> getAllCampaigns(Pageable pageable) {
         return campaignRepository.findAll(pageable).map(this::toCampaignResponse);
@@ -53,7 +58,28 @@ public class CampaignService {
                 .status("ACTIF")
                 .build();
         campaign = campaignRepository.save(campaign);
+
+        String link = "/campagnes/" + campaign.getId();
+        userRepository.findByRole(UserRole.PORTEUR_IDEE)
+                .forEach(u -> notificationService.notify(u, "Nouvelle campagne", "La campagne \"" + title + "\" a été lancée. Participez avec vos idées !", link));
+
         return toCampaignResponse(campaign);
+    }
+
+    @Transactional
+    public CampaignResponse closeCampaign(String id, User currentUser) {
+        Campaign campaign = campaignRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Campagne non trouvée"));
+        if ("TERMINEE".equals(campaign.getStatus())) {
+            throw new BadRequestException("Cette campagne est déjà terminée");
+        }
+        campaign.setStatus("TERMINEE");
+        Campaign saved = campaignRepository.save(campaign);
+
+        String link = "/campagnes/" + saved.getId();
+        userRepository.findAll().forEach(u -> notificationService.notify(u, "Campagne terminée", "La campagne \"" + saved.getTitle() + "\" est terminée.", link));
+
+        return toCampaignResponse(saved);
     }
 
     @Transactional
@@ -74,7 +100,7 @@ public class CampaignService {
     }
 
     private CampaignResponse toCampaignResponse(Campaign c) {
-        long ideaCount = 0;
+        long ideaCount = ideaRepository.countByCampaign_Id(c.getId());
         return CampaignResponse.builder()
                 .id(c.getId())
                 .title(c.getTitle())

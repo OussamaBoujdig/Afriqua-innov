@@ -23,7 +23,8 @@ public class IdeaScoreResponse {
     private Integer riskLevel;
     private BigDecimal totalScore;
     private String comments;
+    private String scoredById;
     private String scoredByName;
     private Instant createdAt;
-  
+
 }

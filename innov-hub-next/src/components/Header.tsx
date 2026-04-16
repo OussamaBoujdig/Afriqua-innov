@@ -1,10 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useEffect, useState, useRef, useCallback } from "react";
-import { notifications as notifApi } from "@/lib/api";
+import { notifications as notifApi, getToken, API_BASE } from "@/lib/api";
+import { Client } from "@stomp/stompjs";
+import SockJS from "sockjs-client";
 
 const roleLabels: Record<string, string> = {
   PORTEUR_IDEE: "Porteur d'idée",
@@ -12,14 +15,6 @@ const roleLabels: Record<string, string> = {
   DIRECTEUR_BU: "Directeur BU",
   DIRECTEUR_GENERAL: "Directeur Général",
 };
-
-const navItems = [
-  { label: "Tableau de bord", href: "/", roles: null },
-  { label: "Mes Idées", href: "/mes-idees", roles: null },
-  { label: "Campagnes", href: "/campagnes", roles: null },
-  { label: "Approbation", href: "/approbation", roles: ["RESPONSABLE_INNOVATION", "DIRECTEUR_BU", "DIRECTEUR_GENERAL"] },
-  { label: "Projets", href: "/suivi-projet", roles: ["RESPONSABLE_INNOVATION", "DIRECTEUR_BU", "DIRECTEUR_GENERAL"] },
-];
 
 interface Notif {
   id: string;
@@ -30,46 +25,116 @@ interface Notif {
   createdAt: string;
 }
 
+interface ToastNotif { id: string; title: string; message: string; link: string | null }
+
+function NotifToast({ notif, onClose, onNavigate }: {
+  notif: ToastNotif;
+  onClose: () => void;
+  onNavigate: () => void;
+}) {
+  useEffect(() => {
+    const t = setTimeout(onClose, 5000);
+    return () => clearTimeout(t);
+  }, [onClose]);
+
+  return (
+    <div className="pointer-events-auto w-80 card p-3 shadow-xl animate-slide-in-right border-l-4 border-[#0066B3]">
+      <div className="flex items-start gap-2.5">
+        <div className="size-7 rounded-md bg-blue-50 flex items-center justify-center shrink-0 mt-0.5">
+          <span className="material-symbols-outlined text-[15px] text-[#0066B3]">notifications</span>
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-[13px] font-semibold text-neutral-900 dark:text-white leading-snug">{notif.title}</p>
+          <p className="mt-0.5 text-[12px] text-neutral-500 line-clamp-2">{notif.message}</p>
+          {notif.link && (
+            <button type="button" onClick={onNavigate} className="mt-1.5 text-[12px] font-medium text-[#0066B3] hover:text-[#004d87] transition-colors flex items-center gap-0.5">
+              Voir <span className="material-symbols-outlined text-[12px]">arrow_forward</span>
+            </button>
+          )}
+        </div>
+        <button type="button" onClick={onClose} className="shrink-0 size-5 flex items-center justify-center text-neutral-300 hover:text-neutral-600 hover:bg-neutral-100 rounded transition-all" aria-label="Fermer">
+          <span className="material-symbols-outlined text-[14px]">close</span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuth();
-  const [unread, setUnread] = useState(0);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [notifOpen, setNotifOpen] = useState(false);
-  const [notifs, setNotifs] = useState<Notif[]>([]);
+
+  const [unread, setUnread]             = useState(0);
+  const [menuOpen, setMenuOpen]         = useState(false);
+  const [notifOpen, setNotifOpen]       = useState(false);
+  const [notifs, setNotifs]             = useState<Notif[]>([]);
   const [notifLoading, setNotifLoading] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const [filterUnread, setFilterUnread] = useState(false);
+  const [toasts, setToasts]             = useState<ToastNotif[]>([]);
+
+  const menuRef  = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
+  const isFirstLoad = useRef(true);
 
-  const isActive = (href: string) => {
-    if (href === "/") return pathname === "/";
-    return pathname.startsWith(href);
-  };
-
-  const fetchUnread = useCallback(() => {
-    notifApi.getUnreadCount().then((res) => {
-      setUnread(res.data as number);
-    }).catch(() => {});
+  const fetchUnread = useCallback(async () => {
+    try {
+      const res = await notifApi.getUnreadCount();
+      const count = res.data as number;
+      setUnread(prev => {
+        if (!isFirstLoad.current && count > prev) {
+          notifApi.getAll(0, 1).then(r => {
+            const page = r.data as { content: Notif[] };
+            const latest = page.content?.[0];
+            if (latest && !latest.isRead) {
+              setToasts(t => [...t, { id: latest.id + Date.now(), title: latest.title, message: latest.message, link: latest.link }]);
+            }
+          }).catch(() => {});
+        }
+        isFirstLoad.current = false;
+        return count;
+      });
+    } catch { /* ignore */ }
   }, []);
 
   useEffect(() => {
     fetchUnread();
-    const interval = setInterval(fetchUnread, 15000);
+    const interval = setInterval(fetchUnread, 60000);
     return () => clearInterval(interval);
   }, [fetchUnread]);
 
   useEffect(() => {
-    fetchUnread();
-  }, [pathname, fetchUnread]);
+    const token = getToken();
+    if (!user?.id || !token) return;
+    const client = new Client({
+      webSocketFactory: () => new SockJS(`${API_BASE}/ws`) as WebSocket,
+      connectHeaders: { Authorization: `Bearer ${token}` },
+      reconnectDelay: 5000,
+      onConnect: () => {
+        client.subscribe(`/user/${user.id}/queue/notifications`, (frame) => {
+          try {
+            const notif: Notif = JSON.parse(frame.body);
+            setUnread(prev => prev + 1);
+            setNotifs(prev => [notif, ...prev]);
+            setToasts(t => [...t, { id: notif.id + Date.now(), title: notif.title, message: notif.message, link: notif.link }]);
+          } catch { /* parse error */ }
+        });
+        client.subscribe(`/user/${user.id}/queue/invitations`, () => {});
+      },
+    });
+    client.activate();
+    return () => { client.deactivate(); };
+  }, [user?.id]);
 
   const openNotifs = async () => {
-    setNotifOpen(!notifOpen);
+    const opening = !notifOpen;
+    setNotifOpen(opening);
     setMenuOpen(false);
-    if (!notifOpen) {
+    setFilterUnread(false);
+    if (opening) {
       setNotifLoading(true);
       try {
-        const res = await notifApi.getAll(0, 20);
+        const res = await notifApi.getAll(0, 30);
         const page = res.data as { content: Notif[] };
         setNotifs(page.content || []);
       } catch { /* ignore */ }
@@ -78,24 +143,33 @@ export default function Header() {
   };
 
   const markAllRead = async () => {
-    try {
-      await notifApi.markAllRead();
-      setNotifs((prev) => prev.map((n) => ({ ...n, isRead: true })));
-      setUnread(0);
-    } catch { /* ignore */ }
+    try { await notifApi.markAllRead(); setNotifs(prev => prev.map(n => ({ ...n, isRead: true }))); setUnread(0); } catch { /* ignore */ }
   };
+
+  const clearAllNotifs = async () => {
+    try { await notifApi.clearAll(); setNotifs([]); setUnread(0); } catch { /* ignore */ }
+  };
+
+  const resolveNotifLink = useCallback((link: string | null): string | null => {
+    if (!link) return null;
+    if (!link.startsWith("/idees/")) return link;
+    const role = user?.role;
+    if (role === "PORTEUR_IDEE") return "/mes-idees";
+    return "/approbation";
+  }, [user]);
 
   const handleNotifClick = async (n: Notif) => {
     if (!n.isRead) {
-      try {
-        await notifApi.markRead(n.id);
-        setNotifs((prev) => prev.map((x) => x.id === n.id ? { ...x, isRead: true } : x));
-        setUnread((prev) => Math.max(0, prev - 1));
-      } catch { /* ignore */ }
+      try { await notifApi.markRead(n.id); setNotifs(prev => prev.map(x => x.id === n.id ? { ...x, isRead: true } : x)); setUnread(prev => Math.max(0, prev - 1)); } catch { /* ignore */ }
     }
     setNotifOpen(false);
-    if (n.link) router.push(n.link);
+    const dest = resolveNotifLink(n.link);
+    if (dest) router.push(dest);
   };
+
+  const dismissToast = useCallback((id: string) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  }, []);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -106,144 +180,207 @@ export default function Header() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const initials = user
-    ? `${user.firstName?.[0] || ""}${user.lastName?.[0] || ""}`.toUpperCase()
-    : "";
+  const initials = user ? `${user.firstName?.[0] || ""}${user.lastName?.[0] || ""}`.toUpperCase() : "";
 
   const timeAgo = (date: string) => {
     const diff = Date.now() - new Date(date).getTime();
     const mins = Math.floor(diff / 60000);
-    if (mins < 1) return "À l'instant";
-    if (mins < 60) return `Il y a ${mins}m`;
+    if (mins < 1) return "maintenant";
+    if (mins < 60) return `${mins}m`;
     const hrs = Math.floor(mins / 60);
-    if (hrs < 24) return `Il y a ${hrs}h`;
-    return `Il y a ${Math.floor(hrs / 24)}j`;
+    if (hrs < 24) return `${hrs}h`;
+    return `${Math.floor(hrs / 24)}j`;
   };
 
+  const pageTitle: Record<string, string> = {
+    "/": "Tableau de bord",
+    "/mes-idees": "Mes Idées",
+    "/soumettre": "Soumettre une idée",
+    "/campagnes/creer": "Créer une campagne",
+    "/campagnes": "Campagnes",
+    "/toutes-idees": "Toutes les idées",
+    "/approbation": "Approbation",
+    "/suivi-projet": "Suivi Projet",
+    "/mes-taches": "Mes Tâches",
+    "/mes-invitations": "Mes Invitations",
+    "/messagerie": "Messagerie",
+    "/gestion-utilisateurs": "Utilisateurs",
+    "/profil": "Mon Profil",
+  };
+
+  const currentTitle = Object.entries(pageTitle).find(([path]) =>
+    path === "/" ? pathname === "/" : pathname.startsWith(path)
+  )?.[1] || "InnovHub";
+
+  const displayedNotifs = filterUnread ? notifs.filter(n => !n.isRead) : notifs;
+  const unreadInList = notifs.filter(n => !n.isRead).length;
+
   return (
-    <header className="flex items-center justify-between whitespace-nowrap border-b border-slate-200/60 dark:border-slate-800/60 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md px-5 lg:px-8 shrink-0 z-50 h-14">
-      <div className="flex items-center gap-8">
-        <Link href="/" className="flex items-center gap-2.5 text-primary hover:opacity-90 transition-opacity">
-          <div className="size-9 bg-gradient-to-br from-primary to-indigo-600 shadow-sm shadow-primary/20 rounded-xl flex items-center justify-center text-white">
-            <span className="material-symbols-outlined text-xl">hub</span>
-          </div>
-          <span className="text-slate-900 dark:text-slate-100 text-base font-bold tracking-tight">
-            Innov&apos;Hub
-          </span>
-        </Link>
-        <nav className="hidden md:flex items-center gap-5">
-          {navItems.filter((item) => !item.roles || (user && item.roles.includes(user.role))).map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={
-                isActive(item.href)
-                  ? "text-sm font-bold text-primary border-b-2 border-primary pb-0.5"
-                  : "text-sm font-medium text-slate-500 hover:text-primary dark:text-slate-400 transition-colors"
-              }
-            >
-              {item.label}
+    <>
+      {/* Toast container */}
+      <div className="fixed bottom-4 right-4 z-[200] flex flex-col gap-2 pointer-events-none" aria-live="polite">
+        {toasts.map(t => (
+          <NotifToast key={t.id} notif={t} onClose={() => dismissToast(t.id)}
+            onNavigate={() => { dismissToast(t.id); const dest = resolveNotifLink(t.link); if (dest) router.push(dest); }} />
+        ))}
+      </div>
+
+      <header className="flex items-center justify-between border-b border-slate-200 dark:border-neutral-800 bg-white dark:bg-[#111113] px-4 lg:px-5 shrink-0 z-50 h-14">
+        {/* Left */}
+        <div className="flex items-center gap-3">
+          {/* Mobile: logo + name */}
+          <Link href="/" className="lg:hidden flex items-center gap-2">
+            <Image src="/logo-afriquia.png" alt="Afriquia SMDC" width={24} height={24} />
+            <span className="text-[14px] font-semibold text-[#0066B3] tracking-tight">InnovHub</span>
+          </Link>
+          {/* Desktop: logo + page title */}
+          <div className="hidden lg:flex items-center gap-3">
+            <Link href="/" className="flex items-center gap-2 shrink-0">
+              <Image src="/logo-afriquia.png" alt="Afriquia SMDC" width={26} height={26} />
             </Link>
-          ))}
-        </nav>
-      </div>
-      <div className="flex items-center gap-4">
-        {/* Notifications bell */}
-        <div className="relative" ref={notifRef}>
-          <button
-            onClick={openNotifs}
-            className="relative flex size-9 items-center justify-center rounded-xl bg-slate-100/60 text-slate-500 dark:bg-slate-800/50 dark:text-slate-400 hover:bg-primary/10 hover:text-primary transition-all"
-          >
-            <span className="material-symbols-outlined text-xl">notifications</span>
-            {unread > 0 && (
-              <span className="absolute -right-0.5 -top-0.5 flex size-4 items-center justify-center rounded-full bg-red-500 text-[8px] font-bold text-white ring-2 ring-white dark:ring-slate-900">
-                {unread > 9 ? "9+" : unread}
-              </span>
-            )}
-          </button>
+            <span className="text-neutral-300 dark:text-neutral-700">|</span>
+            <h1 className="text-[14px] font-medium text-slate-700 dark:text-white">{currentTitle}</h1>
+          </div>
+        </div>
 
-          {notifOpen && (
-            <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/60 dark:border-slate-800/60 shadow-2xl z-50 overflow-hidden">
-              <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-800">
-                <h3 className="text-xs font-bold text-slate-900 dark:text-white">Notifications</h3>
-                {unread > 0 && (
-                  <button onClick={markAllRead} className="text-[10px] font-bold text-primary hover:underline">
-                    Tout marquer lu
-                  </button>
-                )}
-              </div>
-              <div className="max-h-72 overflow-y-auto">
-                {notifLoading ? (
-                  <div className="flex items-center justify-center py-8">
-                    <span className="material-symbols-outlined animate-spin text-primary text-lg">progress_activity</span>
+        {/* Right */}
+        <div className="flex items-center gap-1">
+          {/* Notification bell */}
+          <div className="relative" ref={notifRef}>
+            <button onClick={openNotifs} aria-label="Notifications" aria-expanded={notifOpen}
+              className={`relative flex size-8 items-center justify-center rounded-md transition-colors ${
+                notifOpen ? "bg-blue-50 dark:bg-blue-950/30 text-[#0066B3]" : "hover:bg-slate-100 dark:hover:bg-neutral-800"
+              }`}>
+              <span className={`material-symbols-outlined text-[18px] ${notifOpen ? "text-[#0066B3] dark:text-blue-400" : "text-slate-500 dark:text-neutral-400"}`}>notifications</span>
+              {unread > 0 && (
+                <span className="absolute -right-0.5 -top-0.5 flex min-w-[16px] h-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-medium text-white">
+                  {unread > 99 ? "99+" : unread}
+                </span>
+              )}
+            </button>
+
+            {notifOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setNotifOpen(false)} />
+                <div className="absolute right-0 top-full mt-1 z-50 w-[380px] max-w-[calc(100vw-2rem)] card shadow-lg animate-fade-in-up overflow-hidden">
+                  {/* Panel header */}
+                  <div className="flex items-center justify-between border-b border-neutral-200 dark:border-neutral-800 px-4 py-2.5">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-[13px] font-medium text-neutral-900 dark:text-white">Notifications</h3>
+                      {unread > 0 && (
+                        <span className="text-[11px] font-medium text-neutral-500">{unread} non lues</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {unread > 0 && (
+                        <button onClick={markAllRead} className="text-[12px] font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white px-1.5 py-0.5 rounded">
+                          Tout lire
+                        </button>
+                      )}
+                      {notifs.length > 0 && (
+                        <button onClick={clearAllNotifs} className="text-[12px] font-medium text-red-500 hover:text-red-600 px-1.5 py-0.5 rounded">
+                          Vider
+                        </button>
+                      )}
+                    </div>
                   </div>
-                ) : notifs.length === 0 ? (
-                  <div className="text-center py-8">
-                    <span className="material-symbols-outlined text-3xl text-slate-300 dark:text-slate-600">notifications_off</span>
-                    <p className="text-xs text-slate-400 mt-2">Aucune notification</p>
+
+                  {/* Filter tabs */}
+                  <div className="flex border-b border-neutral-200 dark:border-neutral-800 px-4">
+                    {[
+                      { key: false, label: "Toutes", count: notifs.length },
+                      { key: true, label: "Non lues", count: unreadInList },
+                    ].map(tab => (
+                      <button key={String(tab.key)} onClick={() => setFilterUnread(tab.key)}
+                        className={`py-2 px-2 text-[12px] font-medium border-b-2 -mb-px transition-colors ${
+                          filterUnread === tab.key
+                            ? "border-[#0066B3] dark:border-blue-400 text-[#0066B3] dark:text-blue-400"
+                            : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-neutral-300"
+                        }`}>
+                        {tab.label} {tab.count > 0 && <span className="text-neutral-400 ml-0.5">{tab.count}</span>}
+                      </button>
+                    ))}
                   </div>
-                ) : (
-                  notifs.map((n) => (
-                    <button
-                      key={n.id}
-                      onClick={() => handleNotifClick(n)}
-                      className={`w-full text-left px-4 py-3 border-b border-slate-50 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors ${!n.isRead ? "bg-primary/5" : ""}`}
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className={`mt-0.5 size-2 rounded-full shrink-0 ${!n.isRead ? "bg-primary" : "bg-transparent"}`}></div>
-                        <div className="min-w-0 flex-1">
-                          <p className={`text-xs font-semibold truncate ${!n.isRead ? "text-slate-900 dark:text-white" : "text-slate-600 dark:text-slate-400"}`}>{n.title}</p>
-                          <p className="text-[10px] text-slate-500 line-clamp-2 mt-0.5">{n.message}</p>
-                          <p className="text-[9px] text-slate-400 mt-1">{timeAgo(n.createdAt)}</p>
-                        </div>
+
+                  {/* List */}
+                  <div className="max-h-[360px] overflow-y-auto">
+                    {notifLoading ? (
+                      <div className="flex items-center justify-center py-10 gap-2">
+                        <span className="material-symbols-outlined animate-spin text-neutral-400 text-lg">progress_activity</span>
                       </div>
-                    </button>
-                  ))
-                )}
-              </div>
-            </div>
-          )}
-        </div>
+                    ) : displayedNotifs.length === 0 ? (
+                      <div className="py-10 text-center">
+                        <p className="text-[13px] text-neutral-400">Aucune notification</p>
+                      </div>
+                    ) : (
+                      <ul className="divide-y divide-neutral-100 dark:divide-neutral-800">
+                        {displayedNotifs.map(n => (
+                          <li key={n.id}>
+                            <button type="button" onClick={() => handleNotifClick(n)}
+                              className={`w-full text-left px-4 py-3 transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800/50 ${
+                                !n.isRead ? "bg-blue-50/40 dark:bg-blue-950/10" : ""
+                              }`}>
+                              <div className="flex items-start gap-2">
+                                {!n.isRead && <span className="mt-1.5 shrink-0 size-1.5 rounded-full bg-blue-500" />}
+                                {n.isRead && <span className="mt-1.5 shrink-0 size-1.5" />}
+                                <div className="min-w-0 flex-1">
+                                  <p className={`text-[13px] leading-snug ${!n.isRead ? "font-medium text-neutral-900 dark:text-white" : "text-neutral-600 dark:text-neutral-400"}`}>
+                                    {n.title}
+                                  </p>
+                                  <p className="mt-0.5 text-[12px] text-neutral-500 line-clamp-2">{n.message}</p>
+                                  <p className="mt-1 text-[11px] text-neutral-400">{timeAgo(n.createdAt)}</p>
+                                </div>
+                              </div>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
 
-        {/* User menu */}
-        <div className="relative" ref={menuRef}>
-          <button
-            onClick={() => { setMenuOpen(!menuOpen); setNotifOpen(false); }}
-            className="flex items-center gap-3 border-l border-slate-200/60 pl-4 dark:border-slate-700/60 hover:opacity-80 transition-opacity"
-          >
-            <div className="text-right hidden sm:block">
-              <p className="text-xs font-semibold text-slate-900 dark:text-white leading-tight">
-                {user?.fullName || user?.email || "Utilisateur"}
-              </p>
-              <span className="text-[10px] font-bold text-primary/80 uppercase">
-                {roleLabels[user?.role || ""] || user?.role || ""}
-              </span>
-            </div>
-            <div className="size-9 rounded-full bg-gradient-to-br from-primary to-indigo-600 flex items-center justify-center text-white text-xs font-bold border-2 border-primary/20">
-              {initials}
-            </div>
-          </button>
-          {menuOpen && (
-            <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/60 dark:border-slate-800/60 shadow-xl py-1 z-50">
-              <button
-                onClick={() => { setMenuOpen(false); router.push("/profil"); }}
-                className="w-full text-left px-4 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 transition-colors"
-              >
-                <span className="material-symbols-outlined text-sm">person</span>
-                Mon profil
-              </button>
-              <hr className="border-slate-100 dark:border-slate-800 my-0.5" />
-              <button
-                onClick={async () => { setMenuOpen(false); await logout(); }}
-                className="w-full text-left px-4 py-2 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2 transition-colors"
-              >
-                <span className="material-symbols-outlined text-sm">logout</span>
-                Déconnexion
-              </button>
-            </div>
-          )}
+          <div className="w-px h-4 bg-neutral-200 dark:bg-neutral-700 mx-1" />
+
+          {/* User menu */}
+          <div className="relative" ref={menuRef}>
+            <button onClick={() => { setMenuOpen(!menuOpen); setNotifOpen(false); }} aria-label="Menu utilisateur" aria-expanded={menuOpen}
+              className="flex items-center gap-2 hover:opacity-80 transition-opacity px-1 py-1">
+              <div className="hidden sm:block text-right">
+                <p className="text-[13px] font-medium text-neutral-900 dark:text-white leading-tight">
+                  {user?.fullName || "Utilisateur"}
+                </p>
+                <span className="text-[11px] text-neutral-500">
+                  {roleLabels[user?.role || ""] || ""}
+                </span>
+              </div>
+              <div className="size-7 rounded-full bg-[#0066B3] flex items-center justify-center text-[10px] font-medium text-white">
+                {initials}
+              </div>
+            </button>
+            {menuOpen && (
+              <div className="absolute right-0 top-full mt-1 w-48 card shadow-lg py-1 z-50 animate-fade-in-up">
+                <div className="px-3 py-2 border-b border-neutral-100 dark:border-neutral-800 mb-1">
+                  <p className="text-[13px] font-medium text-neutral-900 dark:text-white truncate">{user?.fullName}</p>
+                  <p className="text-[11px] text-neutral-500 truncate">{user?.email}</p>
+                </div>
+                <button onClick={() => { setMenuOpen(false); router.push("/profil"); }}
+                  className="w-full text-left px-3 py-1.5 text-[13px] text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 flex items-center gap-2 transition-colors">
+                  <span className="material-symbols-outlined text-[16px] text-neutral-400">person</span>
+                  Mon profil
+                </button>
+                <button onClick={async () => { setMenuOpen(false); await logout(); }}
+                  className="w-full text-left px-3 py-1.5 text-[13px] text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 flex items-center gap-2 transition-colors">
+                  <span className="material-symbols-outlined text-[16px]">logout</span>
+                  Déconnexion
+                </button>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
+    </>
   );
 }

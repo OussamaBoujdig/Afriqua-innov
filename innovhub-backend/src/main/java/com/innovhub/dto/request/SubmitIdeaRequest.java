@@ -40,6 +40,8 @@ public class SubmitIdeaRequest {
 
     private String campaignId;
 
+    private String imageUrl;
+
     @Builder.Default
     private boolean draft = false;
 }

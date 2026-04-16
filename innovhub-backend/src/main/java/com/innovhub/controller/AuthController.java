@@ -2,7 +2,6 @@ package com.innovhub.controller;
 
 import com.innovhub.dto.request.LoginRequest;
 import com.innovhub.dto.request.RefreshTokenRequest;
-import com.innovhub.dto.request.RegisterRequest;
 import com.innovhub.dto.response.ApiResponse;
 import com.innovhub.dto.response.AuthResponse;
 import com.innovhub.entity.User;
@@ -18,8 +17,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.UUID;
-
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
@@ -28,12 +25,6 @@ public class AuthController {
 
     private final AuthService authService;
     private final UserRepository userRepository;
-
-    @PostMapping("/register")
-    public ResponseEntity<ApiResponse<AuthResponse>> register(@Valid @RequestBody RegisterRequest req) {
-        AuthResponse result = authService.register(req);
-        return ResponseEntity.ok(ApiResponse.ok("Inscription réussie", result));
-    }
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody LoginRequest req) {

@@ -23,4 +23,6 @@ public interface IdeaRepository extends JpaRepository<Idea, String>, JpaSpecific
     long countByStatus(IdeaStatus status);
 
     long countBySubmittedBy(User user);
+
+    long countByCampaign_Id(String campaignId);
 }

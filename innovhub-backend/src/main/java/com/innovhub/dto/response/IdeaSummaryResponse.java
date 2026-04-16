@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.UUID;
 
 @Data
 @Builder
@@ -22,10 +21,14 @@ public class IdeaSummaryResponse {
     private String category;
     private IdeaStatus status;
     private BigDecimal totalScore;
+    private int scoreCount;
+    private int requiredScoreCount;
+    private String imageUrl;
     private String submittedByName;
     private String submittedById;
     private long voteCount;
     private long commentCount;
+    private Instant scoringDeadline;
     private Instant submittedAt;
     private Instant createdAt;
 }

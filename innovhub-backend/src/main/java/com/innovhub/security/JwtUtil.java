@@ -32,7 +32,8 @@ public class JwtUtil {
         return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 
-    public String generateAccessToken(String userId, String email, String role) {
+    public String generateAccessToken(String userId, String email, String role,
+                                      String firstName, String lastName) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + accessExpiration);
 
@@ -40,6 +41,9 @@ public class JwtUtil {
                 .subject(userId)
                 .claim("email", email)
                 .claim("role", role)
+                .claim("firstName", firstName)
+                .claim("lastName", lastName)
+                .claim("fullName", firstName + " " + lastName)
                 .issuedAt(now)
                 .expiration(expiry)
                 .signWith(getSigningKey())
