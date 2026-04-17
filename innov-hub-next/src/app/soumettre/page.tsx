@@ -2,11 +2,20 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ideas as ideasApi, campaigns as campaignsApi, documents as documentsApi } from "@/lib/api";
+import { ideas as ideasApi, campaigns as campaignsApi, documents as documentsApi, API_BASE, getToken } from "@/lib/api";
 
 interface Campaign {
   id: string;
   title: string;
+}
+
+interface AttachedDoc {
+  file: File;
+  name: string;
+  size: number;
+  uploading: boolean;
+  done: boolean;
+  error: boolean;
 }
 
 export default function SoumettreIdeePage() {
@@ -32,6 +41,9 @@ export default function SoumettreIdeePage() {
   const [imageUploading, setImageUploading] = useState(false);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [attachedDocs, setAttachedDocs] = useState<AttachedDoc[]>([]);
+  const docInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     campaignsApi.getAll(0, 100).then((res) => {
@@ -67,6 +79,30 @@ export default function SoumettreIdeePage() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  const handleDocAdd = (files: FileList | null) => {
+    if (!files) return;
+    const newDocs: AttachedDoc[] = Array.from(files).map((f) => ({
+      file: f,
+      name: f.name,
+      size: f.size,
+      uploading: false,
+      done: false,
+      error: false,
+    }));
+    setAttachedDocs((prev) => [...prev, ...newDocs]);
+    if (docInputRef.current) docInputRef.current.value = "";
+  };
+
+  const removeDoc = (idx: number) => {
+    setAttachedDocs((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1048576) return `${(bytes / 1024).toFixed(0)} KB`;
+    return `${(bytes / 1048576).toFixed(1)} MB`;
+  };
+
   const stepValid = () => {
     if (step === 1) return form.title && form.category && form.problemStatement && form.proposedSolution;
     if (step === 2) return true;
@@ -77,7 +113,7 @@ export default function SoumettreIdeePage() {
     setError("");
     setLoading(true);
     try {
-      await ideasApi.submit({
+      const res = await ideasApi.submit({
         title: form.title,
         category: form.category,
         problemStatement: form.problemStatement,
@@ -88,6 +124,20 @@ export default function SoumettreIdeePage() {
         imageUrl: imageUrl || undefined,
         draft,
       });
+
+      const created = res.data as { id: string };
+      if (created?.id && attachedDocs.length > 0) {
+        for (let i = 0; i < attachedDocs.length; i++) {
+          setAttachedDocs((prev) => prev.map((d, j) => j === i ? { ...d, uploading: true } : d));
+          try {
+            await ideasApi.uploadDocument(created.id, attachedDocs[i].file);
+            setAttachedDocs((prev) => prev.map((d, j) => j === i ? { ...d, uploading: false, done: true } : d));
+          } catch {
+            setAttachedDocs((prev) => prev.map((d, j) => j === i ? { ...d, uploading: false, error: true } : d));
+          }
+        }
+      }
+
       setSuccess(true);
       setTimeout(() => router.push("/mes-idees"), 1500);
     } catch (err: unknown) {
@@ -284,6 +334,48 @@ export default function SoumettreIdeePage() {
                   ))}
                 </select>
               </div>
+
+              {/* Documents */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[12px] font-medium text-neutral-500">
+                  Documents justificatifs <span className="text-neutral-400 font-normal">(optionnel)</span>
+                </label>
+                <input
+                  ref={docInputRef}
+                  type="file"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => handleDocAdd(e.target.files)}
+                />
+                <button
+                  type="button"
+                  onClick={() => docInputRef.current?.click()}
+                  className="flex items-center gap-2 w-full h-10 px-3 rounded-md border-2 border-dashed border-neutral-200 dark:border-neutral-700 hover:border-[#0066B3] hover:bg-blue-50/40 dark:hover:bg-blue-950/20 transition-colors cursor-pointer group"
+                >
+                  <span className="material-symbols-outlined text-[18px] text-neutral-300 dark:text-neutral-600 group-hover:text-[#0066B3] transition-colors">attach_file</span>
+                  <span className="text-[12px] text-neutral-400 group-hover:text-[#0066B3] transition-colors">Ajouter des fichiers (PDF, Word, Excel...)</span>
+                </button>
+                {attachedDocs.length > 0 && (
+                  <div className="space-y-1.5 mt-1">
+                    {attachedDocs.map((doc, idx) => (
+                      <div key={idx} className="flex items-center gap-2 rounded-md border border-neutral-100 dark:border-neutral-800 px-3 py-2 bg-white dark:bg-[#111113]">
+                        <span className="material-symbols-outlined text-[16px] text-neutral-400 shrink-0">
+                          {doc.done ? "check_circle" : doc.error ? "error" : doc.uploading ? "progress_activity" : "description"}
+                        </span>
+                        <span className={`text-[13px] truncate flex-1 ${doc.done ? "text-emerald-600" : doc.error ? "text-red-500" : "text-neutral-700 dark:text-neutral-300"}`}>
+                          {doc.name}
+                        </span>
+                        <span className="text-[11px] text-neutral-400 shrink-0">{formatFileSize(doc.size)}</span>
+                        {!doc.uploading && !doc.done && (
+                          <button type="button" onClick={() => removeDoc(idx)} className="shrink-0 text-neutral-400 hover:text-red-500 transition-colors">
+                            <span className="material-symbols-outlined text-[14px]">close</span>
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
@@ -303,6 +395,20 @@ export default function SoumettreIdeePage() {
                 <div><p className="text-[11px] font-medium text-neutral-400 uppercase tracking-wide">Solution</p><p className="text-[13px] text-neutral-700 dark:text-neutral-300 mt-0.5">{form.proposedSolution}</p></div>
                 {form.expectedRoi && <div><p className="text-[11px] font-medium text-neutral-400 uppercase tracking-wide">ROI</p><p className="text-[13px] text-neutral-700 dark:text-neutral-300 mt-0.5">{form.expectedRoi}</p></div>}
                 {form.estimatedCost && <div><p className="text-[11px] font-medium text-neutral-400 uppercase tracking-wide">Coût</p><p className="text-[13px] text-neutral-700 dark:text-neutral-300 mt-0.5">{parseFloat(form.estimatedCost).toLocaleString()} €</p></div>}
+                {attachedDocs.length > 0 && (
+                  <div>
+                    <p className="text-[11px] font-medium text-neutral-400 uppercase tracking-wide">Documents joints</p>
+                    <ul className="mt-1 space-y-1">
+                      {attachedDocs.map((doc, idx) => (
+                        <li key={idx} className="flex items-center gap-2 text-[13px] text-neutral-700 dark:text-neutral-300">
+                          <span className="material-symbols-outlined text-[14px] text-neutral-400">description</span>
+                          {doc.name}
+                          <span className="text-[11px] text-neutral-400">({formatFileSize(doc.size)})</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             </div>
           )}

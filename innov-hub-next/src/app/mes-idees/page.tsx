@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { ideas as ideasApi, resolveImageUrl } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 
@@ -16,6 +17,11 @@ interface Idea {
   submittedByName: string;
   imageUrl: string | null;
   createdAt: string;
+  problemStatement?: string;
+  proposedSolution?: string;
+  expectedRoi?: string;
+  estimatedCost?: number;
+  campaignId?: string;
 }
 
 const statusConfig: Record<string, { label: string; color: string }> = {
@@ -57,12 +63,14 @@ interface IdeaCardProps {
   justVoted: string | null;
   onDelete: (id: string) => void;
   onVote: (id: string) => void;
+  onEdit: (idea: Idea) => void;
 }
 
-function IdeaCard({ idea, canDeleteIdea, deleting, votingId, justVoted, onDelete, onVote }: IdeaCardProps) {
+function IdeaCard({ idea, canDeleteIdea, deleting, votingId, justVoted, onDelete, onVote, onEdit }: IdeaCardProps) {
   const [imgLoaded, setImgLoaded] = useState(false);
   const cfg = statusConfig[idea.status] || statusConfig.SOUMISE;
   const resolvedImg = resolveImageUrl(idea.imageUrl);
+  const isDraft = idea.status === "BROUILLON";
 
   return (
     <div className="card group flex flex-col overflow-hidden hover:border-[#0066B3]/40 hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
@@ -96,6 +104,12 @@ function IdeaCard({ idea, canDeleteIdea, deleting, votingId, justVoted, onDelete
             </span>
           </button>
         )}
+        {isDraft && (
+          <div className="absolute top-2 left-2 flex items-center gap-1 bg-amber-500 text-white text-[11px] font-medium px-2 py-0.5 rounded-full shadow-sm">
+            <span className="material-symbols-outlined text-[12px]">edit_note</span>
+            Brouillon
+          </div>
+        )}
       </div>
 
       <div className="p-4 flex-1 flex flex-col">
@@ -116,28 +130,23 @@ function IdeaCard({ idea, canDeleteIdea, deleting, votingId, justVoted, onDelete
           {idea.title}
         </h3>
 
+        {/* Draft action */}
+        {isDraft && (
+          <button
+            type="button"
+            onClick={() => onEdit(idea)}
+            className="mt-2 btn-primary w-full justify-center py-1.5 text-[12px]"
+          >
+            <span className="material-symbols-outlined text-[14px]">edit</span>
+            Modifier & Soumettre
+          </button>
+        )}
+
         {/* Footer */}
         <div className="mt-3 pt-3 border-t border-neutral-100 dark:border-neutral-800 flex items-center justify-between text-[12px] text-neutral-400">
           <span>{new Date(idea.createdAt).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" })}</span>
           <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1 cursor-default">
-              <span className="material-symbols-outlined text-[14px]">chat_bubble</span>
-              {idea.commentCount}
-            </span>
-            <button
-              onClick={() => onVote(idea.id)}
-              disabled={!!votingId}
-              className={`flex items-center gap-1 transition-all duration-150 ${
-                justVoted === idea.id
-                  ? "text-[#0066B3] scale-125"
-                  : "hover:text-[#0066B3] hover:scale-110"
-              }`}
-            >
-              <span className={`material-symbols-outlined text-[14px] ${justVoted === idea.id ? "active-fill" : ""}`}>
-                thumb_up
-              </span>
-              {idea.voteCount}
-            </button>
+            
           </div>
         </div>
       </div>
@@ -147,12 +156,12 @@ function IdeaCard({ idea, canDeleteIdea, deleting, votingId, justVoted, onDelete
 
 export default function MesIdeesPage() {
   const { user } = useAuth();
+  const router = useRouter();
   const isResponsable = user?.role === "RESPONSABLE_INNOVATION";
-  // Porteur can delete their own BROUILLON/SOUMISE; Responsable can delete any non-clôturée
   const getDeletable = (idea: Idea) => {
     if (idea.status === "CLOTUREE") return false;
     if (isResponsable) return true;
-    return true; // porteur can delete own (API enforces ownership server-side)
+    return true;
   };
 
   const [ideas, setIdeas] = useState<Idea[]>([]);
@@ -162,6 +171,55 @@ export default function MesIdeesPage() {
   const [votingId, setVotingId] = useState<string | null>(null);
   const [justVoted, setJustVoted] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const [editIdea, setEditIdea] = useState<Idea | null>(null);
+  const [editLoading, setEditLoading] = useState(false);
+  const [editForm, setEditForm] = useState({ title: "", category: "", problemStatement: "", proposedSolution: "", expectedRoi: "", estimatedCost: "" });
+  const [editError, setEditError] = useState<string | null>(null);
+
+  const openEdit = async (idea: Idea) => {
+    try {
+      const res = await ideasApi.getById(idea.id);
+      const detail = res.data as Idea;
+      setEditForm({
+        title: detail.title || "",
+        category: detail.category || "",
+        problemStatement: detail.problemStatement || "",
+        proposedSolution: detail.proposedSolution || "",
+        expectedRoi: detail.expectedRoi || "",
+        estimatedCost: detail.estimatedCost ? String(detail.estimatedCost) : "",
+      });
+      setEditIdea(detail);
+      setEditError(null);
+    } catch {
+      setDeleteError("Impossible de charger le brouillon");
+      setTimeout(() => setDeleteError(null), 3000);
+    }
+  };
+
+  const submitEdit = async (draft: boolean) => {
+    if (!editIdea) return;
+    setEditLoading(true);
+    setEditError(null);
+    try {
+      await ideasApi.update(editIdea.id, {
+        title: editForm.title,
+        category: editForm.category,
+        problemStatement: editForm.problemStatement,
+        proposedSolution: editForm.proposedSolution,
+        expectedRoi: editForm.expectedRoi || undefined,
+        estimatedCost: editForm.estimatedCost ? parseFloat(editForm.estimatedCost) : undefined,
+        imageUrl: editIdea.imageUrl || undefined,
+        draft,
+      });
+      setEditIdea(null);
+      load();
+    } catch (e) {
+      setEditError(e instanceof Error ? e.message : "Erreur lors de la mise à jour");
+    } finally {
+      setEditLoading(false);
+    }
+  };
 
   const load = () => {
     setLoading(true);
@@ -288,11 +346,97 @@ export default function MesIdeesPage() {
                 justVoted={justVoted}
                 onDelete={handleDelete}
                 onVote={handleVote}
+                onEdit={openEdit}
               />
             ))}
           </div>
         )}
       </div>
+
+      {/* Edit Draft Modal */}
+      {editIdea && (
+        <>
+          <div className="fixed inset-0 z-[55] bg-black/30" onClick={() => !editLoading && setEditIdea(null)} />
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+            <div className="card w-full max-w-lg max-h-[90vh] overflow-y-auto p-5 space-y-4">
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-[15px] font-semibold text-neutral-900 dark:text-white">Modifier le brouillon</h2>
+                <button type="button" onClick={() => setEditIdea(null)} disabled={editLoading}
+                  className="flex size-8 shrink-0 items-center justify-center rounded-md border border-neutral-200 bg-white text-neutral-500 hover:bg-neutral-50 transition-colors dark:border-neutral-700 dark:bg-[#111113]">
+                  <span className="material-symbols-outlined text-[18px]">close</span>
+                </button>
+              </div>
+
+              {editError && (
+                <div className="flex items-center gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-[13px] text-red-600 dark:border-red-900 dark:bg-red-950/30 dark:text-red-400">
+                  <span className="material-symbols-outlined text-[15px]">error</span>
+                  {editError}
+                </div>
+              )}
+
+              <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-1">
+                  <label className="text-[12px] font-medium text-neutral-500">Titre *</label>
+                  <input value={editForm.title} onChange={(e) => setEditForm((p) => ({ ...p, title: e.target.value }))}
+                    className="w-full h-9 px-3 rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-[#111113] text-[13px] text-neutral-900 dark:text-neutral-100 outline-none focus:border-[#0066B3]" />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[12px] font-medium text-neutral-500">Catégorie *</label>
+                  <select value={editForm.category} onChange={(e) => setEditForm((p) => ({ ...p, category: e.target.value }))}
+                    className="w-full h-9 px-3 rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-[#111113] text-[13px] text-neutral-900 dark:text-neutral-100 outline-none focus:border-[#0066B3]">
+                    <option value="">Sélectionnez</option>
+                    <option value="Technologie">Technologie & IT</option>
+                    <option value="Opérations">Opérations & Logistique</option>
+                    <option value="RH">Ressources Humaines</option>
+                    <option value="Marketing">Marketing & Ventes</option>
+                    <option value="RSE">RSE & Environnement</option>
+                  </select>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[12px] font-medium text-neutral-500">Problématique *</label>
+                  <textarea value={editForm.problemStatement} onChange={(e) => setEditForm((p) => ({ ...p, problemStatement: e.target.value }))}
+                    className="w-full px-3 py-2 rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-[#111113] text-[13px] text-neutral-900 dark:text-neutral-100 outline-none focus:border-[#0066B3] resize-none" rows={3} />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[12px] font-medium text-neutral-500">Solution proposée *</label>
+                  <textarea value={editForm.proposedSolution} onChange={(e) => setEditForm((p) => ({ ...p, proposedSolution: e.target.value }))}
+                    className="w-full px-3 py-2 rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-[#111113] text-[13px] text-neutral-900 dark:text-neutral-100 outline-none focus:border-[#0066B3] resize-none" rows={3} />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[12px] font-medium text-neutral-500">ROI estimé</label>
+                    <input value={editForm.expectedRoi} onChange={(e) => setEditForm((p) => ({ ...p, expectedRoi: e.target.value }))}
+                      className="w-full h-9 px-3 rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-[#111113] text-[13px] text-neutral-900 dark:text-neutral-100 outline-none focus:border-[#0066B3]" />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[12px] font-medium text-neutral-500">Coût estimé (€)</label>
+                    <input type="number" value={editForm.estimatedCost} onChange={(e) => setEditForm((p) => ({ ...p, estimatedCost: e.target.value }))}
+                      className="w-full h-9 px-3 rounded-md border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-[#111113] text-[13px] text-neutral-900 dark:text-neutral-100 outline-none focus:border-[#0066B3]" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between gap-3 pt-3 border-t border-neutral-100 dark:border-neutral-800">
+                <button type="button" onClick={() => submitEdit(true)} disabled={editLoading}
+                  className="btn-ghost text-[13px]">
+                  {editLoading ? <span className="material-symbols-outlined animate-spin text-[14px]">progress_activity</span> : "Sauvegarder brouillon"}
+                </button>
+                <button type="button"
+                  onClick={() => submitEdit(false)}
+                  disabled={editLoading || !editForm.title || !editForm.category || !editForm.problemStatement || !editForm.proposedSolution}
+                  className="btn-primary text-[13px]">
+                  {editLoading ? <span className="material-symbols-outlined animate-spin text-[14px]">progress_activity</span> : (
+                    <>
+                      <span className="material-symbols-outlined text-[14px]">send</span>
+                      Soumettre
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

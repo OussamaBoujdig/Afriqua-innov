@@ -141,6 +141,7 @@ public class IdeaService {
         idea.setTargetBu(req.getTargetBu());
         idea.setTimelineMonths(req.getTimelineMonths());
         idea.setResourcesNeeded(req.getResourcesNeeded());
+        idea.setImageUrl(req.getImageUrl());
 
         if (req.getCampaignId() != null) {
             Campaign campaign = campaignRepository.findById(req.getCampaignId())
@@ -150,7 +151,19 @@ public class IdeaService {
             idea.setCampaign(null);
         }
 
+        if (!req.isDraft()) {
+            idea.setStatus(IdeaStatus.SOUMISE);
+            idea.setSubmittedAt(Instant.now());
+        }
+
         idea = ideaRepository.save(idea);
+
+        if (idea.getStatus() == IdeaStatus.SOUMISE) {
+            final Idea savedIdea = idea;
+            userRepository.findByRole(UserRole.RESPONSABLE_INNOVATION)
+                    .forEach(u -> notificationService.notify(u, "Nouvelle idée soumise", "L'idée \"" + savedIdea.getTitle() + "\" a été soumise.", "/approbation"));
+        }
+
         return toIdeaDetail(idea);
     }
 
